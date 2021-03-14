@@ -8,12 +8,18 @@
 CC = clang
 
 # define any compile-time flags
-CFLAGS	:= -Wall -Wextra -g -O0 `sdl2-config --cflags --libs`
+CFLAGS	:= -Wall -Wextra -g -O3 `sdl2-config --cflags --libs`
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = -lSDL_image
+LFLAGS = -lSDL2_image
+
+# scan-build
+SCAN =		scan-build
+
+# scan flags
+SCANFLAGS =	-analyze-headers -no-failure-reports -enable-checker deadcode.DeadStores
 
 # define output directory
 OUTPUT	:= output
@@ -23,7 +29,6 @@ SRC		:= src
 
 # define include directory
 INCLUDE	:= include
-INCLUDE += /opt/homebrew/opt/sdl_image/include/SDL
 
 # define lib directory
 LIB		:= lib
@@ -91,3 +96,14 @@ clean:
 run: all
 	./$(OUTPUTMAIN)
 	@echo Executing 'run: all' complete!
+
+check: clean all
+	cppcheck -f --enable=all --inconclusive --check-library --debug-warnings --suppress=missingIncludeSystem --check-config $(INCLUDES) ./$(SRC)
+
+analyse:
+# scan-build make
+	clear
+	for file in $(SOURCES) ; do \
+    	$(SCAN) $(SCANFLAGS) $(CC) $(CFLAGS) --analyze -fsanitize=address $(INCLUDES) $$file ; \
+	done
+	rm *.plist

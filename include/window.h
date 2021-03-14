@@ -3,6 +3,14 @@
 
 #include "common.h"
 
+typedef struct
+{
+    SDL_Window *win;
+    SDL_Renderer *rend;
+} Window;
+
+extern Window mainWindow;
+
 void initialise();
 
 #endif

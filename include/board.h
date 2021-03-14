@@ -7,15 +7,25 @@ typedef struct
 {
     SDL_Rect rect;
     SDL_Color colour;
+    bool selected;
 } Square;
 
-typedef struct
+void makeBoard();
+
+void drawBoard();
+
+void toggleBoardSquare(SDL_Point *mousePos, SDL_Point *clickOffset, Square **square);
+
+void alignPiece(SDL_Rect *rect);
+
+static inline int getFirstDigit(int num)
 {
-    Square squares[SQUARES_SIZE][SQUARES_SIZE];
-} Board;
-
-Board makeBoard();
-
-void drawBoard(SDL_Renderer *renderer, Board *board);
+    int len = floor(log10(num)) + 1;
+    if (len <= 2)
+    {
+        return 0;
+    }
+    return num / (int)pow(10, len - 1);
+}
 
 #endif

@@ -64,6 +64,7 @@ analysis/**
 # folders
 data
 output
+lib
 
 bin/main
 valgrind-out.txt
