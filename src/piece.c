@@ -1,6 +1,5 @@
 #include "piece.h"
 
-#define PIECE_COUNT 16
 #define ROW 8
 #define COL 8
 
@@ -9,62 +8,149 @@
 #define OFFSET700 700
 #define OFFSET200 200
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+#define SAME_TEAM(n, i) (getFirstDigit(point->x) == getFirstDigit(n.pieces[i].rect->x) && \
+                         getFirstDigit(point->y) == getFirstDigit(n.pieces[i].rect->y))
+
 typedef struct
 {
     long len;
     char *buffer;
 } SVGString;
 
-typedef struct
+bool checkPieceOnPiece(SDL_Point *point, char player)
 {
-    Piece pieces[PIECE_COUNT];
-    int count;
-} PlayerOnePieces;
+    for (size_t i = 0; i < PIECE_COUNT; i++)
+    {
+        if (player == PLAYER_2 && SDL_PointInRect(point, board.p1.pieces[i].rect))
+            return true;
+        if (player == PLAYER_1 && SDL_PointInRect(point, board.p2.pieces[i].rect))
+            return true;
+    }
+    return false;
+}
 
-typedef struct
+bool checkPieceOnSameTeam(SDL_Point *point, char player)
 {
-    Piece pieces[PIECE_COUNT];
-    int count;
-} PlayerTwoPieces;
+    for (size_t i = 0; i < PIECE_COUNT; i++)
+    {
+        if (player == PLAYER_2)
+        {
+            if (SAME_TEAM(board.p2, i))
+                return true;
+        }
+        else
+        {
+            if (SAME_TEAM(board.p1, i))
+                return true;
+        }
+    }
+    return false;
+}
 
-PlayerOnePieces p1;
-PlayerTwoPieces p2;
-
-bool canMove(Piece piece, SDL_Point oldPos)
+bool canMoveHV(int mouseX, int mouseY, int oldX, int oldY, int dist)
 {
-    int x = getFirstDigit(piece.rect->x);
-    int y = getFirstDigit(piece.rect->y);
+    for (int i = 0; i < dist; i++)
+    {
+        if (mouseX == oldX && (mouseY + i == oldY || mouseY - i == oldY))
+            return true;
+        else if (mouseY == oldY && (mouseX + i == oldX || mouseX - i == oldX))
+            return true;
+    }
+    return false;
+}
 
+bool canMoveKnight(int mouseX, int mouseY, int oldX, int oldY)
+{
+    if (mouseX + 1 == oldX && mouseY + 2 == oldY)
+        return true;
+    else if (mouseX - 1 == oldX && mouseY - 2 == oldY)
+        return true;
+    else if (mouseX + 1 == oldX && mouseY - 2 == oldY)
+        return true;
+    else if (mouseX - 1 == oldX && mouseY + 2 == oldY)
+        return true;
+    else if (mouseX + 2 == oldX && mouseY + 1 == oldY)
+        return true;
+    else if (mouseX - 2 == oldX && mouseY - 1 == oldY)
+        return true;
+    else if (mouseX + 2 == oldX && mouseY - 1 == oldY)
+        return true;
+    else if (mouseX - 2 == oldX && mouseY + 1 == oldY)
+        return true;
+    return false;
+}
+
+bool canMoveDiag(int mouseX, int mouseY, int oldX, int oldY, int dist)
+{
+    for (int i = 0; i < dist; i++)
+    {
+        if (mouseX + i == oldX && mouseY + i == oldY)
+            return true;
+        else if (mouseX - i == oldX && mouseY - i == oldY)
+            return true;
+        else if (mouseX - i == oldX && mouseY + i == oldY)
+            return true;
+        else if (mouseX + i == oldX && mouseY - i == oldY)
+            return true;
+    }
+    return false;
+}
+
+bool canMove(Piece piece, SDL_Point oldPos, SDL_Point mousePos)
+{
     int oldX = getFirstDigit(oldPos.x);
     int oldY = getFirstDigit(oldPos.y);
+
+    int mouseX = getFirstDigit(mousePos.x);
+    int mouseY = getFirstDigit(mousePos.y);
+
+    if (checkPieceOnSameTeam(&mousePos, piece.player))
+        return false;
 
     switch (piece.initial)
     {
     case PAWN:
-        if (piece.firstMove)
+        switch (piece.player)
         {
-            if (piece.player == PLAYER_2 && oldY - y <= 3 && oldY - y > 0)
+        case PLAYER_1:
+            if (checkPieceOnPiece(&mousePos, piece.player))
             {
-                piece.firstMove = false;
+                return false;
+            }
+            else if (mouseY - oldY == 1 && mouseX == oldX)
+            {
                 return true;
             }
-            else if (piece.player == PLAYER_1 && oldY + y <= 3 && oldY + y > 0)
+            break;
+        case PLAYER_2:
+            if (checkPieceOnPiece(&mousePos, piece.player))
             {
-                piece.firstMove = false;
+                return false;
+            }
+            else if (oldY - mouseY == 1 && mouseX == oldX)
+            {
                 return true;
             }
+            break;
+        default:
+            break;
         }
         break;
     case ROOK:
-        break;
+        return canMoveHV(mouseX, mouseY, oldX, oldY, ROW_COUNT);
     case KNIGHT:
-        break;
+        return canMoveKnight(mouseX, mouseY, oldX, oldY);
     case BISHOP:
-        break;
+        return canMoveDiag(mouseX, mouseY, oldX, oldY, ROW_COUNT);
     case QUEEN:
-        break;
+        return canMoveDiag(mouseX, mouseY, oldX, oldY, ROW_COUNT) ||
+               canMoveHV(mouseX, mouseY, oldX, oldY, ROW_COUNT);
     case KING:
-        break;
+        return canMoveDiag(mouseX, mouseY, oldX, oldY, 2) ||
+               canMoveHV(mouseX, mouseY, oldX, oldY, 2);
     default:
         break;
     }
@@ -76,20 +162,20 @@ void checkIfPiece(SDL_Point *mousePos, SDL_Point *clickOffset, Piece *piece)
 {
     for (size_t i = 0; i < PIECE_COUNT; i++)
     {
-        if (SDL_PointInRect(mousePos, p1.pieces[i].rect))
+        if (SDL_PointInRect(mousePos, board.p1.pieces[i].rect))
         {
-            *piece = p1.pieces[i];
-            clickOffset->x = mousePos->x - p1.pieces[i].rect->x;
-            clickOffset->y = mousePos->y - p1.pieces[i].rect->y;
+            *piece = board.p1.pieces[i];
+            clickOffset->x = mousePos->x - board.p1.pieces[i].rect->x;
+            clickOffset->y = mousePos->y - board.p1.pieces[i].rect->y;
 
             break;
         }
 
-        if (SDL_PointInRect(mousePos, p2.pieces[i].rect))
+        if (SDL_PointInRect(mousePos, board.p2.pieces[i].rect))
         {
-            *piece = p2.pieces[i];
-            clickOffset->x = mousePos->x - p2.pieces[i].rect->x;
-            clickOffset->y = mousePos->y - p2.pieces[i].rect->y;
+            *piece = board.p2.pieces[i];
+            clickOffset->x = mousePos->x - board.p2.pieces[i].rect->x;
+            clickOffset->y = mousePos->y - board.p2.pieces[i].rect->y;
 
             break;
         }
@@ -165,7 +251,8 @@ Piece makePiece(const char initial, SDL_Texture *texture, int x, int y, char pla
 
     piece.rect = rect;
 
-    piece.firstMove = true;
+    // *piece.firstMove = true;
+    memset(&piece.firstMove, true, sizeof *piece.firstMove);
 
     piece.player = player;
 
@@ -181,8 +268,8 @@ void makePieces()
     SDL_Texture *queenTexture = getTexture(readSVGFile(QUEEN_IMG));
     SDL_Texture *kingTexture = getTexture(readSVGFile(KING_IMG));
 
-    p1.count = PIECE_COUNT;
-    p2.count = PIECE_COUNT;
+    board.p1.count = PIECE_COUNT;
+    board.p2.count = PIECE_COUNT;
 
     for (size_t i = 0; i < ROW; i++)
     {
@@ -190,33 +277,33 @@ void makePieces()
         {
         case 0:
         case 7:
-            p1.pieces[i] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            p2.pieces[i + ROW] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p1.pieces[i] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
+            board.p2.pieces[i + ROW] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 1:
         case 6:
-            p1.pieces[i] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            p2.pieces[i + ROW] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p1.pieces[i] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
+            board.p2.pieces[i + ROW] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 2:
         case 5:
-            p1.pieces[i] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            p2.pieces[i + ROW] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p1.pieces[i] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
+            board.p2.pieces[i + ROW] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 3:
-            p1.pieces[i] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            p2.pieces[i + ROW] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p1.pieces[i] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
+            board.p2.pieces[i + ROW] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 4:
-            p1.pieces[i] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            p2.pieces[i + ROW] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p1.pieces[i] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
+            board.p2.pieces[i + ROW] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         default:
             break;
         }
 
-        p1.pieces[i + ROW] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET700, PLAYER_1);
-        p2.pieces[i] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET200, PLAYER_2);
+        board.p1.pieces[i + ROW] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET700, PLAYER_1);
+        board.p2.pieces[i] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET200, PLAYER_2);
     }
 }
 
@@ -224,8 +311,8 @@ void drawPieces()
 {
     for (size_t i = 0; i < PIECE_COUNT; i++)
     {
-        SDL_RenderCopy(mainWindow.rend, p1.pieces[i].texture, NULL, p1.pieces[i].rect);
-        SDL_RenderCopy(mainWindow.rend, p2.pieces[i].texture, NULL, p2.pieces[i].rect);
+        SDL_RenderCopy(mainWindow.rend, board.p1.pieces[i].texture, NULL, board.p1.pieces[i].rect);
+        SDL_RenderCopy(mainWindow.rend, board.p2.pieces[i].texture, NULL, board.p2.pieces[i].rect);
     }
 }
 
@@ -233,7 +320,7 @@ void cleanUpPieces()
 {
     for (size_t i = 0; i < PIECE_COUNT; i++)
     {
-        SDL_DestroyTexture(p1.pieces[i].texture);
-        SDL_DestroyTexture(p2.pieces[i].texture);
+        SDL_DestroyTexture(board.p1.pieces[i].texture);
+        SDL_DestroyTexture(board.p2.pieces[i].texture);
     }
 }

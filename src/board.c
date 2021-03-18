@@ -1,18 +1,14 @@
 #include "board.h"
 
-Square board[ROW_COUNT][ROW_COUNT];
-
-unsigned int moves = 0;
-
 const SDL_Color black = {0, 0, 0, 0};
 const SDL_Color white = {255, 255, 255, 0};
-const SDL_Color selectedColour = {255, 0, 0, 0};
+const SDL_Color selectedColour = {150, 150, 150, 0};
+
+Board board;
 
 void makeBoard()
 {
     const int squareWidth = WIDTH / ROW_COUNT;
-
-    bool bw = true;
 
     for (size_t i = 0; i < ROW_COUNT; i++)
     {
@@ -31,51 +27,39 @@ void makeBoard()
             square.rect.y = squareWidth * j;
 
             // colour
-            square.colour = bw ? white : black;
+            square.colour = (i + j) % 2 == 0 ? white : black;
 
-            board[i][j] = square;
-            bw = !bw;
+            board.squares[i][j] = square;
         }
-        bw = !bw;
+        // Could swap pieces or sort to have equal halfs
     }
-}
-
-static inline void drawSquare(Square square)
-{
-    SDL_Color c = square.selected ? selectedColour : square.colour;
-    SDL_SetRenderDrawColor(mainWindow.rend, c.r, c.g, c.b, c.a);
-    SDL_RenderFillRect(mainWindow.rend, &square.rect);
 }
 
 void drawBoard()
 {
     for (size_t i = 0; i < ROW_COUNT; i++)
     {
-        drawSquare(board[0][i]);
-        drawSquare(board[1][i]);
-        drawSquare(board[2][i]);
-        drawSquare(board[3][i]);
-        drawSquare(board[4][i]);
-        drawSquare(board[5][i]);
-        drawSquare(board[6][i]);
-        drawSquare(board[7][i]);
+        for (size_t j = 0; j < ROW_COUNT; j++)
+        {
+            SDL_Color c = board.squares[i][j].selected ? selectedColour : board.squares[i][j].colour;
+            SDL_SetRenderDrawColor(mainWindow.rend, c.r, c.g, c.b, c.a);
+            SDL_RenderFillRect(mainWindow.rend, &board.squares[i][j].rect);
+        }
     }
 }
 
-void toggleBoardSquare(SDL_Point *mousePos, SDL_Point *clickOffset, Square **square)
+void toggleBoardSquare(SDL_Point *mousePos, Square **square)
 {
     int x = getFirstDigit(mousePos->x);
     int y = getFirstDigit(mousePos->y);
 
-    if (SDL_PointInRect(mousePos, &board[x][y].rect))
+    if (SDL_PointInRect(mousePos, &board.squares[x][y].rect))
     {
         if (*square != NULL)
-        {
             (*square)->selected = !(*square)->selected;
-        }
 
-        *square = &board[x][y];
-        board[x][y].selected = !board[x][y].selected;
+        *square = &board.squares[x][y];
+        board.squares[x][y].selected = !board.squares[x][y].selected;
     }
 }
 
@@ -88,10 +72,10 @@ void alignPiece(SDL_Rect *rect)
     int x = getFirstDigit(point.x);
     int y = getFirstDigit(point.y);
 
-    if (SDL_PointInRect(&point, &board[x][y].rect))
+    if (SDL_PointInRect(&point, &board.squares[x][y].rect))
     {
-        rect->x = board[x][y].rect.x;
-        rect->y = board[x][y].rect.y;
+        rect->x = board.squares[x][y].rect.x;
+        rect->y = board.squares[x][y].rect.y;
 
         return;
     }

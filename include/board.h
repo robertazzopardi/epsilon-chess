@@ -10,11 +10,36 @@ typedef struct
     bool selected;
 } Square;
 
+typedef struct Piece
+{
+    char initial;
+    SDL_Texture *texture;
+    SDL_Rect *rect;
+    bool *firstMove;
+    char player;
+} Piece;
+
+typedef struct
+{
+    Piece pieces[PIECE_COUNT];
+    int count;
+} Player;
+
+typedef struct
+{
+    Player p1;
+    Player p2;
+    unsigned int moveCount;
+    Square squares[ROW_COUNT][ROW_COUNT];
+} Board;
+
+extern Board board;
+
 void makeBoard();
 
 void drawBoard();
 
-void toggleBoardSquare(SDL_Point *mousePos, SDL_Point *clickOffset, Square **square);
+void toggleBoardSquare(SDL_Point *mousePos, Square **square);
 
 void alignPiece(SDL_Rect *rect);
 

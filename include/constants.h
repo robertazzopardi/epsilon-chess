@@ -12,6 +12,18 @@
 
 #define FRAME_DELAY 1000 / 60
 
+#define PIECE_COUNT 16
+
+#define PAWN 'P'
+#define KING 'K'
+#define QUEEN 'Q'
+#define BISHOP 'B'
+#define KNIGHT 'N'
+#define ROOK 'R'
+
+#define PLAYER_1 '1'
+#define PLAYER_2 '2'
+
 #define PAWN_IMG "/Users/rob/_CODE/C/chess/resources/864630-chess/svg/008-pawn.svg"
 #define ROOK_IMG "/Users/rob/_CODE/C/chess/resources/864630-chess/svg/006-rook.svg"
 #define KNIGHT_IMG "/Users/rob/_CODE/C/chess/resources/864630-chess/svg/010-horse.svg"
