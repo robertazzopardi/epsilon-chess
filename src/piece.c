@@ -1,8 +1,5 @@
 #include "piece.h"
 
-#define ROW 8
-#define COL 8
-
 #define OFFSET100 100
 #define OFFSET800 800
 #define OFFSET700 700
@@ -11,8 +8,9 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define SAME_TEAM(n, i) (getFirstDigit(point->x) == getFirstDigit(n.pieces[i].rect->x) && \
-                         getFirstDigit(point->y) == getFirstDigit(n.pieces[i].rect->y))
+#define SAME_TEAM(n, i) (                                            \
+    getFirstDigit(point->x) == getFirstDigit(n.pieces[i].rect->x) && \
+    getFirstDigit(point->y) == getFirstDigit(n.pieces[i].rect->y))
 
 typedef struct
 {
@@ -20,46 +18,73 @@ typedef struct
     char *buffer;
 } SVGString;
 
-bool checkPieceOnPiece(SDL_Point *point, char player)
+static inline Player getPlayer(char player)
 {
-    for (size_t i = 0; i < PIECE_COUNT; i++)
+    return player == PLAYER_1 ? board.p1 : board.p2;
+}
+
+static inline Player getOpposition(char player)
+{
+    return player == PLAYER_1 ? board.p2 : board.p1;
+}
+
+bool checkPieceOnPiece(SDL_Point *point, Player player)
+{
+    for (int i = 0; i < player.count; i++)
     {
-        if (player == PLAYER_2 && SDL_PointInRect(point, board.p1.pieces[i].rect))
-            return true;
-        if (player == PLAYER_1 && SDL_PointInRect(point, board.p2.pieces[i].rect))
+        if (SDL_PointInRect(point, player.pieces[i].rect))
             return true;
     }
     return false;
 }
 
-bool checkPieceOnSameTeam(SDL_Point *point, char player)
+bool checkPieceOnSameTeam(int x, int y, Player player)
 {
-    for (size_t i = 0; i < PIECE_COUNT; i++)
+    for (int j = 0; j < player.count; j++)
     {
-        if (player == PLAYER_2)
+        if (x == getFirstDigit(player.pieces[j].rect->x) &&
+            y == getFirstDigit(player.pieces[j].rect->y))
         {
-            if (SAME_TEAM(board.p2, i))
-                return true;
+            return false;
         }
-        else
-        {
-            if (SAME_TEAM(board.p1, i))
-                return true;
-        }
+    }
+    return true;
+}
+
+bool canMoveDiag(int mouseX, int mouseY, int oldX, int oldY)
+{
+    int squaresMoved = abs(mouseX - oldX) + abs(mouseY - oldY);
+    for (int i = 0; i < squaresMoved; i++)
+    {
+        if (mouseX + i == oldX && mouseY + i == oldY)
+            return true;
+        else if (mouseX - i == oldX && mouseY - i == oldY)
+            return true;
+        else if (mouseX - i == oldX && mouseY + i == oldY)
+            return true;
+        else if (mouseX + i == oldX && mouseY - i == oldY)
+            return true;
     }
     return false;
 }
 
-bool canMoveHV(int mouseX, int mouseY, int oldX, int oldY, int dist)
+bool canMoveHV(int mouseX, int mouseY, int oldX, int oldY, Player player)
 {
-    for (int i = 0; i < dist; i++)
+    int squaresMoved = abs(mouseX - oldX) + abs(mouseY - oldY);
+
+    for (int i = 1; i <= squaresMoved; i++)
     {
-        if (mouseX == oldX && (mouseY + i == oldY || mouseY - i == oldY))
-            return true;
-        else if (mouseY == oldY && (mouseX + i == oldX || mouseX - i == oldX))
-            return true;
+        if (mouseX > oldX && !checkPieceOnSameTeam(oldX + i, oldY, player))
+            return false;
+        else if (mouseX < oldX && !checkPieceOnSameTeam(oldX - i, oldY, player))
+            return false;
+        else if (mouseY > oldY && !checkPieceOnSameTeam(oldX, oldY + i, player))
+            return false;
+        else if (mouseY < oldY && !checkPieceOnSameTeam(oldX, oldY - i, player))
+            return false;
     }
-    return false;
+
+    return !canMoveDiag(mouseX, mouseY, oldX, oldY);
 }
 
 bool canMoveKnight(int mouseX, int mouseY, int oldX, int oldY)
@@ -83,19 +108,18 @@ bool canMoveKnight(int mouseX, int mouseY, int oldX, int oldY)
     return false;
 }
 
-bool canMoveDiag(int mouseX, int mouseY, int oldX, int oldY, int dist)
+static inline bool checkDifference(int mouseY, int oldY, char player)
 {
-    for (int i = 0; i < dist; i++)
-    {
-        if (mouseX + i == oldX && mouseY + i == oldY)
-            return true;
-        else if (mouseX - i == oldX && mouseY - i == oldY)
-            return true;
-        else if (mouseX - i == oldX && mouseY + i == oldY)
-            return true;
-        else if (mouseX + i == oldX && mouseY - i == oldY)
-            return true;
-    }
+    return player == PLAYER_1 ? mouseY - oldY == 1 : oldY - mouseY == 1;
+}
+
+bool canMovePawn(int mouseX, int mouseY, int oldX, int oldY, char player, SDL_Point mousePos)
+{
+    if (checkPieceOnPiece(&mousePos, getOpposition(player)))
+        return false;
+    else if (checkDifference(mouseY, oldY, player) == 1 && mouseX == oldX)
+        return true;
+
     return false;
 }
 
@@ -107,50 +131,25 @@ bool canMove(Piece piece, SDL_Point oldPos, SDL_Point mousePos)
     int mouseX = getFirstDigit(mousePos.x);
     int mouseY = getFirstDigit(mousePos.y);
 
-    if (checkPieceOnSameTeam(&mousePos, piece.player))
-        return false;
+    // if (checkPieceOnSameTeam(&mousePos, piece.player))
+    //     return false;
 
     switch (piece.initial)
     {
     case PAWN:
-        switch (piece.player)
-        {
-        case PLAYER_1:
-            if (checkPieceOnPiece(&mousePos, piece.player))
-            {
-                return false;
-            }
-            else if (mouseY - oldY == 1 && mouseX == oldX)
-            {
-                return true;
-            }
-            break;
-        case PLAYER_2:
-            if (checkPieceOnPiece(&mousePos, piece.player))
-            {
-                return false;
-            }
-            else if (oldY - mouseY == 1 && mouseX == oldX)
-            {
-                return true;
-            }
-            break;
-        default:
-            break;
-        }
-        break;
+        return canMovePawn(mouseX, mouseY, oldX, oldY, piece.player, mousePos);
     case ROOK:
-        return canMoveHV(mouseX, mouseY, oldX, oldY, ROW_COUNT);
+        return canMoveHV(mouseX, mouseY, oldX, oldY, getPlayer(piece.player));
     case KNIGHT:
         return canMoveKnight(mouseX, mouseY, oldX, oldY);
     case BISHOP:
-        return canMoveDiag(mouseX, mouseY, oldX, oldY, ROW_COUNT);
+        return canMoveDiag(mouseX, mouseY, oldX, oldY);
     case QUEEN:
-        return canMoveDiag(mouseX, mouseY, oldX, oldY, ROW_COUNT) ||
-               canMoveHV(mouseX, mouseY, oldX, oldY, ROW_COUNT);
+        return canMoveDiag(mouseX, mouseY, oldX, oldY) ||
+               canMoveHV(mouseX, mouseY, oldX, oldY, getPlayer(piece.player));
     case KING:
-        return canMoveDiag(mouseX, mouseY, oldX, oldY, 2) ||
-               canMoveHV(mouseX, mouseY, oldX, oldY, 2);
+        return canMoveDiag(mouseX, mouseY, oldX, oldY) ||
+               canMoveHV(mouseX, mouseY, oldX, oldY, getPlayer(piece.player));
     default:
         break;
     }
@@ -160,7 +159,7 @@ bool canMove(Piece piece, SDL_Point oldPos, SDL_Point mousePos)
 
 void checkIfPiece(SDL_Point *mousePos, SDL_Point *clickOffset, Piece *piece)
 {
-    for (size_t i = 0; i < PIECE_COUNT; i++)
+    for (int i = 0; i < board.p1.count; i++)
     {
         if (SDL_PointInRect(mousePos, board.p1.pieces[i].rect))
         {
@@ -170,7 +169,10 @@ void checkIfPiece(SDL_Point *mousePos, SDL_Point *clickOffset, Piece *piece)
 
             break;
         }
+    }
 
+    for (int i = 0; i < board.p2.count; i++)
+    {
         if (SDL_PointInRect(mousePos, board.p2.pieces[i].rect))
         {
             *piece = board.p2.pieces[i];
@@ -187,7 +189,7 @@ void printPieces(Piece *pieces)
     for (size_t i = 0; i < PIECE_COUNT; i++)
     {
         printf("%c", pieces[i].initial);
-        if (i == ROW - 1)
+        if (i == ROW_COUNT - 1)
         {
             printf("\n");
         }
@@ -237,24 +239,21 @@ Piece makePiece(const char initial, SDL_Texture *texture, int x, int y, char pla
 {
     int w = 0;
     int h = 0;
-    Piece piece = {.initial = initial};
+    Piece piece = {.initial = initial, .player = player};
 
     piece.texture = texture;
     SDL_QueryTexture(piece.texture, NULL, NULL, &w, &h);
 
     SDL_Rect *rect = NULL;
     rect = calloc(1, sizeof(*rect));
-    rect->h = HEIGHT / ROW;
-    rect->w = WIDTH / ROW;
+    rect->h = HEIGHT / ROW_COUNT;
+    rect->w = WIDTH / ROW_COUNT;
     rect->x = x;
     rect->y = y;
 
     piece.rect = rect;
 
-    // *piece.firstMove = true;
     memset(&piece.firstMove, true, sizeof *piece.firstMove);
-
-    piece.player = player;
 
     return piece;
 }
@@ -271,38 +270,41 @@ void makePieces()
     board.p1.count = PIECE_COUNT;
     board.p2.count = PIECE_COUNT;
 
-    for (size_t i = 0; i < ROW; i++)
+    board.p1.pieces = calloc(PIECE_COUNT, sizeof(*board.p1.pieces));
+    board.p2.pieces = calloc(PIECE_COUNT, sizeof(*board.p2.pieces));
+
+    for (size_t i = 0; i < ROW_COUNT; i++)
     {
         switch (i)
         {
         case 0:
         case 7:
             board.p1.pieces[i] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            board.p2.pieces[i + ROW] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(ROOK, rookTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 1:
         case 6:
             board.p1.pieces[i] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            board.p2.pieces[i + ROW] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(KNIGHT, knightTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 2:
         case 5:
             board.p1.pieces[i] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            board.p2.pieces[i + ROW] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(BISHOP, bishopTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 3:
             board.p1.pieces[i] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            board.p2.pieces[i + ROW] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(QUEEN, queenTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         case 4:
             board.p1.pieces[i] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET800, PLAYER_1);
-            board.p2.pieces[i + ROW] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(KING, kingTexture, i * OFFSET100, HEIGHT - OFFSET100, PLAYER_2);
             break;
         default:
             break;
         }
 
-        board.p1.pieces[i + ROW] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET700, PLAYER_1);
+        board.p1.pieces[i + ROW_COUNT] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET700, PLAYER_1);
         board.p2.pieces[i] = makePiece(PAWN, pawnTexture, i * OFFSET100, HEIGHT - OFFSET200, PLAYER_2);
     }
 }
@@ -323,4 +325,6 @@ void cleanUpPieces()
         SDL_DestroyTexture(board.p1.pieces[i].texture);
         SDL_DestroyTexture(board.p2.pieces[i].texture);
     }
+    free(board.p1.pieces);
+    free(board.p2.pieces);
 }

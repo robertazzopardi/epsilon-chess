@@ -8,6 +8,7 @@ typedef struct
     SDL_Rect rect;
     SDL_Color colour;
     bool selected;
+
 } Square;
 
 typedef struct Piece
@@ -21,7 +22,8 @@ typedef struct Piece
 
 typedef struct
 {
-    Piece pieces[PIECE_COUNT];
+    // Piece pieces[PIECE_COUNT];
+    Piece *pieces;
     int count;
 } Player;
 

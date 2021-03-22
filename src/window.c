@@ -67,6 +67,7 @@ void handleEvents(SDL_Event event, bool *running, MouseEvent *mEvent)
             {
                 mEvent->LMBDown = true;
                 checkIfPiece(&mEvent->mousePos, &mEvent->offset, &mEvent->piece);
+
                 // save old position
                 if (mEvent->piece.rect)
                 {

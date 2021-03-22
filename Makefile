@@ -19,7 +19,7 @@ LFLAGS = -lSDL2_image
 SCAN =		scan-build
 
 # scan flags
-SCANFLAGS =	-analyze-headers -no-failure-reports -enable-checker deadcode.DeadStores
+SCANFLAGS =	-analyze-headers -no-failure-reports -enable-checker deadcode.DeadStores --status-bugs
 
 # define output directory
 OUTPUT	:= output
