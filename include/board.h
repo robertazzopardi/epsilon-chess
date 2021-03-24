@@ -3,12 +3,11 @@
 
 #include "common.h"
 
-typedef struct
+typedef struct Square
 {
     SDL_Rect rect;
     SDL_Color colour;
     bool selected;
-
 } Square;
 
 typedef struct Piece
@@ -16,13 +15,12 @@ typedef struct Piece
     char initial;
     SDL_Texture *texture;
     SDL_Rect *rect;
-    bool *firstMove;
+    bool firstMove;
     char player;
 } Piece;
 
 typedef struct
 {
-    // Piece pieces[PIECE_COUNT];
     Piece *pieces;
     int count;
 } Player;
@@ -41,9 +39,7 @@ void makeBoard();
 
 void drawBoard();
 
-void toggleBoardSquare(SDL_Point *mousePos, Square **square);
-
-void alignPiece(SDL_Rect *rect);
+void toggleBoardSquare(const SDL_Point *mousePos, Square **square);
 
 static inline int getFirstDigit(int num)
 {

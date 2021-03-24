@@ -3,6 +3,20 @@
 
 #include "common.h"
 
+typedef struct Piece Piece;
+
+typedef struct Square Square;
+
+typedef struct MouseEvent
+{
+    bool LMBDown;
+    SDL_Point mousePos;
+    SDL_Point offset;
+    Piece *piece;
+    SDL_Point oldPos;
+    Square *square;
+} MouseEvent;
+
 typedef struct
 {
     SDL_Window *win;

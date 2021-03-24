@@ -9,6 +9,7 @@ CC = clang
 
 # define any compile-time flags
 CFLAGS	:= -Wall -Wextra -g -O3 `sdl2-config --cflags --libs`
+# CFLAGS  += -fsanitize=address -fno-omit-frame-pointer
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -19,7 +20,7 @@ LFLAGS = -lSDL2_image
 SCAN =		scan-build
 
 # scan flags
-SCANFLAGS =	-analyze-headers -no-failure-reports -enable-checker deadcode.DeadStores --status-bugs
+SCANFLAGS =	-v -analyze-headers -no-failure-reports -enable-checker deadcode.DeadStores --status-bugs
 
 # define output directory
 OUTPUT	:= output

@@ -48,7 +48,7 @@ void drawBoard()
     }
 }
 
-void toggleBoardSquare(SDL_Point *mousePos, Square **square)
+void toggleBoardSquare(const SDL_Point *mousePos, Square **square)
 {
     int x = getFirstDigit(mousePos->x);
     int y = getFirstDigit(mousePos->y);
@@ -60,23 +60,5 @@ void toggleBoardSquare(SDL_Point *mousePos, Square **square)
 
         *square = &board.squares[x][y];
         board.squares[x][y].selected = !board.squares[x][y].selected;
-    }
-}
-
-void alignPiece(SDL_Rect *rect)
-{
-    SDL_Point point;
-    point.x = rect->x + (rect->w / 2);
-    point.y = rect->y + (rect->h / 2);
-
-    int x = getFirstDigit(point.x);
-    int y = getFirstDigit(point.y);
-
-    if (SDL_PointInRect(&point, &board.squares[x][y].rect))
-    {
-        rect->x = board.squares[x][y].rect.x;
-        rect->y = board.squares[x][y].rect.y;
-
-        return;
     }
 }
