@@ -22,8 +22,8 @@ void drawPieces();
 
 void cleanUpPieces();
 
-void checkIfPiece(SDL_Point *mousePos, SDL_Point *clickOffset, Piece *piece);
+void checkIfPiece(MouseEvent *mEvent);
 
-void alignPiece(SDL_Rect *rect, const char player);
+void alignPiece(MouseEvent *mEvent);
 
 #endif

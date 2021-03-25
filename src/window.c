@@ -2,22 +2,6 @@
 
 Window mainWindow;
 
-void cleanUpWindow()
-{
-    // destroy renderer
-    SDL_DestroyRenderer(mainWindow.rend);
-
-    // destroy window
-    SDL_DestroyWindow(mainWindow.win);
-
-    mainWindow.win = NULL;
-    mainWindow.rend = NULL;
-
-    IMG_Quit();
-    // close SDL
-    SDL_Quit();
-}
-
 inline void initWindow()
 {
     mainWindow.win = SDL_CreateWindow(TITLE,
@@ -28,6 +12,26 @@ inline void initWindow()
                                       0);
 
     mainWindow.rend = SDL_CreateRenderer(mainWindow.win, -1, SDL_RENDERER_ACCELERATED);
+}
+
+void checkIfFirstMove(MouseEvent *mEvent)
+{
+    for (int i = 0; i < board.p1.count; i++)
+    {
+        if (SDL_RectEquals(board.p1.pieces[i].rect, mEvent->piece->rect))
+        {
+            board.p1.pieces[i].firstMove = false;
+            break;
+        }
+    }
+    for (int i = 0; i < board.p2.count; i++)
+    {
+        if (SDL_RectEquals(board.p2.pieces[i].rect, mEvent->piece->rect))
+        {
+            board.p2.pieces[i].firstMove = false;
+            break;
+        }
+    }
 }
 
 void handleEvents(SDL_Event *event, bool *running, MouseEvent *mEvent)
@@ -46,7 +50,10 @@ void handleEvents(SDL_Event *event, bool *running, MouseEvent *mEvent)
                 {
                     if (canMove(mEvent))
                     {
-                        alignPiece(mEvent->piece->rect, mEvent->piece->player);
+                        checkIfFirstMove(mEvent);
+                        board.moveCount++;
+
+                        alignPiece(mEvent);
                     }
                     else
                     {
@@ -62,7 +69,7 @@ void handleEvents(SDL_Event *event, bool *running, MouseEvent *mEvent)
             if (!mEvent->LMBDown && event->button.button == SDL_BUTTON_LEFT)
             {
                 mEvent->LMBDown = true;
-                checkIfPiece(&mEvent->mousePos, &mEvent->offset, mEvent->piece);
+                checkIfPiece(mEvent);
 
                 // save old position
                 if (mEvent->piece->rect)
@@ -97,13 +104,13 @@ void gameLoop()
 
     SDL_Event event = {};
 
-    MouseEvent *mEvent = calloc(1, sizeof(*mEvent));
-    mEvent->piece = calloc(1, sizeof(*mEvent->piece));
+    MouseEvent mEvent = {};
+    mEvent.piece = calloc(1, sizeof(*mEvent.piece));
 
     // annimation loop
     while (running)
     {
-        handleEvents(&event, &running, mEvent);
+        handleEvents(&event, &running, &mEvent);
 
         SDL_SetRenderDrawColor(mainWindow.rend, 0, 0, 0, 255);
 
@@ -114,15 +121,30 @@ void gameLoop()
 
         drawPieces(mainWindow.rend);
 
-        // triggers the double buffers
-        // for multiple rendering
+        // triggers the double buffers for multiple rendering
         SDL_RenderPresent(mainWindow.rend);
 
         // calculates to 60 fps
         SDL_Delay(FRAME_DELAY);
     }
 
-    free(mEvent->piece);
+    // free(mEvent->piece);
+}
+
+void cleanUpWindow()
+{
+    // destroy renderer
+    SDL_DestroyRenderer(mainWindow.rend);
+
+    // destroy window
+    SDL_DestroyWindow(mainWindow.win);
+
+    mainWindow.win = NULL;
+    mainWindow.rend = NULL;
+
+    IMG_Quit();
+    // close SDL
+    SDL_Quit();
 }
 
 void initialise()

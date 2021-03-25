@@ -31,7 +31,6 @@ void makeBoard()
 
             board.squares[i][j] = square;
         }
-        // Could swap pieces or sort to have equal halfs
     }
 }
 
