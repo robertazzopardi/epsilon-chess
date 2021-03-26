@@ -6,14 +6,11 @@ const SDL_Color selectedColour = {150, 150, 150, 0};
 
 Board board;
 
-void makeBoard()
-{
+void makeBoard() {
     const int squareWidth = WIDTH / ROW_COUNT;
 
-    for (size_t i = 0; i < ROW_COUNT; i++)
-    {
-        for (size_t j = 0; j < ROW_COUNT; j++)
-        {
+    for (size_t i = 0; i < ROW_COUNT; i++) {
+        for (size_t j = 0; j < ROW_COUNT; j++) {
             Square square;
 
             square.selected = false;
@@ -34,26 +31,22 @@ void makeBoard()
     }
 }
 
-void drawBoard()
-{
-    for (size_t i = 0; i < ROW_COUNT; i++)
-    {
-        for (size_t j = 0; j < ROW_COUNT; j++)
-        {
-            SDL_Color c = board.squares[i][j].selected ? selectedColour : board.squares[i][j].colour;
+void drawBoard() {
+    for (size_t i = 0; i < ROW_COUNT; i++) {
+        for (size_t j = 0; j < ROW_COUNT; j++) {
+            SDL_Color c = board.squares[i][j].selected ? selectedColour
+                                                       : board.squares[i][j].colour;
             SDL_SetRenderDrawColor(mainWindow.rend, c.r, c.g, c.b, c.a);
             SDL_RenderFillRect(mainWindow.rend, &board.squares[i][j].rect);
         }
     }
 }
 
-void toggleBoardSquare(const SDL_Point *mousePos, Square **square)
-{
+void toggleBoardSquare(const SDL_Point *mousePos, Square **square) {
     int x = getFirstDigit(mousePos->x);
     int y = getFirstDigit(mousePos->y);
 
-    if (SDL_PointInRect(mousePos, &board.squares[x][y].rect))
-    {
+    if (SDL_PointInRect(mousePos, &board.squares[x][y].rect)) {
         if (*square != NULL)
             (*square)->selected = !(*square)->selected;
 

@@ -1,14 +1,16 @@
 #ifndef _WINDOW_h_
 #define _WINDOW_h_
 
-#include "common.h"
+#include <SDL.h>
+
+#include "board.h"
+#include "piece.h"
 
 typedef struct Piece Piece;
 
 typedef struct Square Square;
 
-typedef struct MouseEvent
-{
+typedef struct MouseEvent {
     bool LMBDown;
     SDL_Point mousePos;
     SDL_Point offset;
@@ -17,8 +19,7 @@ typedef struct MouseEvent
     Square *square;
 } MouseEvent;
 
-typedef struct
-{
+typedef struct {
     SDL_Window *win;
     SDL_Renderer *rend;
 } Window;

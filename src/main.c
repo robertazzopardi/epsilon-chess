@@ -9,20 +9,19 @@
  *
  */
 
-#include "common.h"
+#include "main.h"
 
-int main()
-{
-	// retutns zero on success else non-zero
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-		printf("error initializing SDL: %s\n", SDL_GetError());
+int main() {
+    // retutns zero on success else non-zero
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+        printf("error initializing SDL: %s\n", SDL_GetError());
 
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 
-	makeBoard();
+    makeBoard();
 
-	initialise();
+    initialise();
 
-	return 0;
+    return 0;
 }

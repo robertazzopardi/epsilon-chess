@@ -1,17 +1,24 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
-#include "common.h"
+#include <SDL.h>
+#include <SDL_image.h>
+#include <stdbool.h>
 
-typedef struct Square
-{
+#include "piece.h"
+#include "window.h"
+
+#define WIDTH 800
+#define HEIGHT 800
+#define ROW_COUNT 8
+
+typedef struct Square {
     SDL_Rect rect;
     SDL_Color colour;
     bool selected;
 } Square;
 
-typedef struct Piece
-{
+typedef struct Piece {
     char initial;
     SDL_Texture *texture;
     SDL_Rect *rect;
@@ -19,14 +26,12 @@ typedef struct Piece
     char player;
 } Piece;
 
-typedef struct
-{
+typedef struct Player {
     Piece *pieces;
     int count;
 } Player;
 
-typedef struct
-{
+typedef struct {
     Player p1;
     Player p2;
     unsigned int moveCount;
@@ -41,11 +46,9 @@ void drawBoard();
 
 void toggleBoardSquare(const SDL_Point *mousePos, Square **square);
 
-static inline int getFirstDigit(int num)
-{
+static inline int getFirstDigit(int num) {
     int len = floor(log10(num)) + 1;
-    if (len <= 2)
-    {
+    if (len <= 2) {
         return 0;
     }
     return num / (int)pow(10, len - 1);

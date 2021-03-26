@@ -1,10 +1,27 @@
 #ifndef _PIECE_H_
 #define _PIECE_H_
 
-#include "common.h"
+#include <SDL.h>
+#include <stdbool.h>
 
+#include "window.h"
+
+/**
+ * @brief Piece forward declaration
+ *
+ */
 typedef struct Piece Piece;
 
+/**
+ * @brief Player forward declaration
+ *
+ */
+typedef struct Player Player;
+
+/**
+ * @brief MouseEvent forward declaration
+ *
+ */
 typedef struct MouseEvent MouseEvent;
 
 /**
@@ -22,8 +39,10 @@ void drawPieces();
 
 void cleanUpPieces();
 
-void checkIfPiece(MouseEvent *mEvent);
+void checkIfPiece(MouseEvent *mEvent, Player *player);
 
 void alignPiece(MouseEvent *mEvent);
+
+void checkIfFirstMove(const MouseEvent *mEvent);
 
 #endif
