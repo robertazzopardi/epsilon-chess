@@ -8,7 +8,7 @@
 CC = clang
 
 # define any compile-time flags
-CFLAGS	:= -Wall -Wextra -g -O3 -D_THREAD_SAFE `sdl2-config --cflags`
+CFLAGS	:= -Wall -Wextra -flto -g -O3 -D_THREAD_SAFE `sdl2-config --cflags`
 # CFLAGS  += -fsanitize=address -fno-omit-frame-pointer
 
 # define library paths in addition to /usr/lib

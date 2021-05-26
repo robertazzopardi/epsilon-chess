@@ -19,8 +19,6 @@ int main() {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 
-    makeBoard();
-
     initialise();
 
     return 0;

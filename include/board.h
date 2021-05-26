@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "piece.h"
+#include "svgutil.h"
 #include "window.h"
 
 #define WIDTH 800
@@ -14,7 +15,7 @@
 
 typedef struct Square {
     SDL_Rect rect;
-    SDL_Color colour;
+    // SDL_Color colour;
     bool selected;
 } Square;
 
@@ -36,6 +37,8 @@ typedef struct {
     Player p2;
     unsigned int moveCount;
     Square squares[ROW_COUNT][ROW_COUNT];
+    SDL_Texture *texture;
+    SDL_Rect *rect;
 } Board;
 
 extern Board board;
@@ -46,12 +49,8 @@ void drawBoard();
 
 void toggleBoardSquare(const SDL_Point *mousePos, Square **square);
 
-static inline int getFirstDigit(int num) {
-    int len = floor(log10(num)) + 1;
-    if (len <= 2) {
-        return 0;
-    }
-    return num / (int)pow(10, len - 1);
-}
+SDL_Point getPos(int x, int y);
+
+void cleanUpBoard();
 
 #endif

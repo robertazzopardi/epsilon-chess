@@ -1,19 +1,15 @@
 #include "window.h"
 
 #define SQUARE_COUNT 64
-
 #define TITLE "Chess"
-
 #define FRAME_DELAY 1000 / 60
 
 Window mainWindow;
 
 inline void initWindow() {
-    mainWindow.win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,
-                                      SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
+    mainWindow.win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
 
-    mainWindow.rend =
-        SDL_CreateRenderer(mainWindow.win, -1, SDL_RENDERER_ACCELERATED);
+    mainWindow.rend = SDL_CreateRenderer(mainWindow.win, -1, SDL_RENDERER_ACCELERATED);
 }
 
 void handleEvents(SDL_Event *event, bool *running, MouseEvent *mEvent) {
@@ -117,10 +113,13 @@ void cleanUpWindow() {
 void initialise() {
     initWindow();
 
+    makeBoard();
+
     makePieces(mainWindow.rend);
 
     gameLoop();
 
     cleanUpPieces();
     cleanUpWindow();
+    cleanUpBoard();
 }
