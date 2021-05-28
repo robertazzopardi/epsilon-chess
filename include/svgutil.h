@@ -2,7 +2,6 @@
 #define __SVG_UTIL__
 
 #include <SDL.h>
-#include <SDL_image.h>
 
 #define BLACK "#000000"
 #define WHITE "#FFFFFF"
@@ -12,10 +11,10 @@ typedef struct {
     SDL_Texture *white;
 } TwoToneTexture;
 
-TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename);
+TwoToneTexture *getTexture(SDL_Renderer *, const char *);
 
-SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize);
+SDL_Texture *makeTexture(SDL_Renderer *, char *, long);
 
-char *openFile(const char *inputFilename, long *fsize);
+char *openFile(const char *, long *);
 
 #endif

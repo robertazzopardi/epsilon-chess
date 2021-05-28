@@ -2,9 +2,7 @@
 #define _WINDOW_h_
 
 #include <SDL.h>
-
-#include "board.h"
-#include "piece.h"
+#include <stdbool.h>
 
 typedef struct Piece Piece;
 

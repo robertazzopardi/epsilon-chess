@@ -2,12 +2,7 @@
 #define _BOARD_H_
 
 #include <SDL.h>
-#include <SDL_image.h>
 #include <stdbool.h>
-
-#include "piece.h"
-#include "svgutil.h"
-#include "window.h"
 
 #define WIDTH 800
 #define HEIGHT 800
@@ -15,7 +10,6 @@
 
 typedef struct Square {
     SDL_Rect rect;
-    // SDL_Color colour;
     bool selected;
 } Square;
 
@@ -47,9 +41,9 @@ void makeBoard();
 
 void drawBoard();
 
-void toggleBoardSquare(const SDL_Point *mousePos, Square **square);
+void toggleBoardSquare(const SDL_Point *, Square **);
 
-SDL_Point getPos(int x, int y);
+SDL_Point getPos(int, int);
 
 void cleanUpBoard();
 

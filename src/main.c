@@ -9,16 +9,9 @@
  *
  */
 
-#include "main.h"
+#include "window.h"
 
 int main() {
-    // retutns zero on success else non-zero
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-        printf("error initializing SDL: %s\n", SDL_GetError());
-
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
-
     initialise();
 
     return 0;

@@ -1,4 +1,7 @@
 #include "piece.h"
+#include "board.h"
+#include "svgutil.h"
+#include "window.h"
 
 #define PAWN_IMG "./resources/864630-chess/svg/pieces/pawn.svg"
 #define ROOK_IMG "./resources/864630-chess/svg/pieces/rook.svg"
@@ -87,9 +90,9 @@ static inline int getDistance(const SDL_Point *p1, const SDL_Point *p2) {
     return (p2->x - p1->x) + (p2->y - p1->y);
 }
 
-static inline int getDistanceAbs(const SDL_Point *p1, const SDL_Point *p2) {
-    return abs(p2->x - p1->x) + abs(p2->y - p1->y);
-}
+// static inline int getDistanceAbs(const SDL_Point *p1, const SDL_Point *p2) {
+//     return abs(p2->x - p1->x) + abs(p2->y - p1->y);
+// }
 
 static inline bool distanceEqual(const SDL_Point *p1, const SDL_Point *p2) {
     return abs(p2->x - p1->x) == abs(p2->y - p1->y);
@@ -141,26 +144,28 @@ bool canMoveKnight(const SDL_Point *p1, const SDL_Point *p2,
     return false;
 }
 
-static inline bool checkDifference(const int mouseY, const int oldY,
-                                   const char player) {
-    return player == PLAYER_1 ? mouseY - oldY == 1 : oldY - mouseY == 1;
-}
+// static inline bool checkDifference(const int mouseY, const int oldY,
+//                                    const char player) {
+//     return player == PLAYER_1 ? mouseY - oldY == 1 : oldY - mouseY == 1;
+// }
 
 bool canMovePawn(const SDL_Point *p1, const SDL_Point *p2, const Piece *piece, const SDL_Point *mousePos) {
     const int d = getDistance(p1, p2);
     bool canMove = false;
 
     switch (piece->player) {
-        case PLAYER_1:
-            if (d == 1 || (d == 2 && piece->firstMove)) canMove = true;
-            break;
+    case PLAYER_1:
+        if (d == 1 || (d == 2 && piece->firstMove))
+            canMove = true;
+        break;
 
-        case PLAYER_2:
-            if (d == -1 || (d == -2 && piece->firstMove)) canMove = true;
-            break;
+    case PLAYER_2:
+        if (d == -1 || (d == -2 && piece->firstMove))
+            canMove = true;
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     if (checkPieceOnPiece(mousePos, getOpposition(piece->player)))
@@ -179,21 +184,21 @@ bool canMove(MouseEvent *mEvent) {
     // printf("%c\n", mEvent->piece->initial);
 
     switch (mEvent->piece->initial) {
-        case PAWN:
-            return canMovePawn(&p1, &p2, mEvent->piece, &mEvent->mousePos);
-        case ROOK:
-            return canMoveRook(&p1, &p2, player);
-        case KNIGHT:
-            return canMoveKnight(&p1, &p2, player);
-        case BISHOP:
-            return canMoveBishop(&p1, &p2, player);
-        case QUEEN:
-            return canMoveBishop(&p1, &p2, player) || canMoveRook(&p1, &p2, player);
-        case KING:
-            return (canMoveBishop(&p1, &p2, player) && getDistance(&p1, &p2) == 2) ||
-                   (canMoveRook(&p1, &p2, player) && getDistance(&p1, &p2) == 1);
-        default:
-            break;
+    case PAWN:
+        return canMovePawn(&p1, &p2, mEvent->piece, &mEvent->mousePos);
+    case ROOK:
+        return canMoveRook(&p1, &p2, player);
+    case KNIGHT:
+        return canMoveKnight(&p1, &p2, player);
+    case BISHOP:
+        return canMoveBishop(&p1, &p2, player);
+    case QUEEN:
+        return canMoveBishop(&p1, &p2, player) || canMoveRook(&p1, &p2, player);
+    case KING:
+        return (canMoveBishop(&p1, &p2, player) && getDistance(&p1, &p2) == 2) ||
+               (canMoveRook(&p1, &p2, player) && getDistance(&p1, &p2) == 1);
+    default:
+        break;
     }
 
     return false;
@@ -286,31 +291,31 @@ void makePieces() {
         p2BackRow.y = HEIGHT - OFFSET100;
 
         switch (i) {
-            case 0:
-            case 7:
-                board.p1.pieces[i] = makePiece(ROOK, rookTexture->black, &p1BackRow, PLAYER_1);
-                board.p2.pieces[i + ROW_COUNT] = makePiece(ROOK, rookTexture->white, &p2BackRow, PLAYER_2);
-                break;
-            case 1:
-            case 6:
-                board.p1.pieces[i] = makePiece(KNIGHT, knightTexture->black, &p1BackRow, PLAYER_1);
-                board.p2.pieces[i + ROW_COUNT] = makePiece(KNIGHT, knightTexture->white, &p2BackRow, PLAYER_2);
-                break;
-            case 2:
-            case 5:
-                board.p1.pieces[i] = makePiece(BISHOP, bishopTexture->black, &p1BackRow, PLAYER_1);
-                board.p2.pieces[i + ROW_COUNT] = makePiece(BISHOP, bishopTexture->white, &p2BackRow, PLAYER_2);
-                break;
-            case 3:
-                board.p1.pieces[i] = makePiece(QUEEN, queenTexture->black, &p1BackRow, PLAYER_1);
-                board.p2.pieces[i + ROW_COUNT] = makePiece(QUEEN, queenTexture->white, &p2BackRow, PLAYER_2);
-                break;
-            case 4:
-                board.p1.pieces[i] = makePiece(KING, kingTexture->black, &p1BackRow, PLAYER_1);
-                board.p2.pieces[i + ROW_COUNT] = makePiece(KING, kingTexture->white, &p2BackRow, PLAYER_2);
-                break;
-            default:
-                break;
+        case 0:
+        case 7:
+            board.p1.pieces[i] = makePiece(ROOK, rookTexture->black, &p1BackRow, PLAYER_1);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(ROOK, rookTexture->white, &p2BackRow, PLAYER_2);
+            break;
+        case 1:
+        case 6:
+            board.p1.pieces[i] = makePiece(KNIGHT, knightTexture->black, &p1BackRow, PLAYER_1);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(KNIGHT, knightTexture->white, &p2BackRow, PLAYER_2);
+            break;
+        case 2:
+        case 5:
+            board.p1.pieces[i] = makePiece(BISHOP, bishopTexture->black, &p1BackRow, PLAYER_1);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(BISHOP, bishopTexture->white, &p2BackRow, PLAYER_2);
+            break;
+        case 3:
+            board.p1.pieces[i] = makePiece(QUEEN, queenTexture->black, &p1BackRow, PLAYER_1);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(QUEEN, queenTexture->white, &p2BackRow, PLAYER_2);
+            break;
+        case 4:
+            board.p1.pieces[i] = makePiece(KING, kingTexture->black, &p1BackRow, PLAYER_1);
+            board.p2.pieces[i + ROW_COUNT] = makePiece(KING, kingTexture->white, &p2BackRow, PLAYER_2);
+            break;
+        default:
+            break;
         }
 
         board.p1.pieces[i + ROW_COUNT] = makePiece(

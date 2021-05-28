@@ -1,10 +1,13 @@
 #include "board.h"
+#include "svgutil.h"
+#include "window.h"
+#include <SDL.h>
+
+#define CHESS_BOARD "./resources/864630-chess/svg/board/board.svg"
 
 const SDL_Color black = {0, 0, 0, 0};
 const SDL_Color white = {255, 255, 255, 0};
 const SDL_Color selectedColour = {150, 150, 150, 0};
-
-#define CHESS_BOARD "./resources/864630-chess/svg/board/board.svg"
 
 Board board;
 
@@ -66,7 +69,8 @@ void toggleBoardSquare(const SDL_Point *mousePos, Square **square) {
     SDL_Point pos = getPos(mousePos->x, mousePos->y);
 
     if (SDL_PointInRect(mousePos, &board.squares[pos.x][pos.y].rect)) {
-        if (*square != NULL) (*square)->selected = !(*square)->selected;
+        if (*square != NULL)
+            (*square)->selected = !(*square)->selected;
 
         *square = &board.squares[pos.x][pos.y];
         board.squares[pos.x][pos.y].selected = !board.squares[pos.x][pos.y].selected;
@@ -80,8 +84,10 @@ SDL_Point getPos(int x, int y) {
     int px = x / (int)pow(10, lenX - 1);
     int py = y / (int)pow(10, lenY - 1);
 
-    if (lenX <= 2) px = 0;
-    if (lenY <= 2) py = 0;
+    if (lenX <= 2)
+        px = 0;
+    if (lenY <= 2)
+        py = 0;
 
     SDL_Point point = {.x = px, .y = py};
 

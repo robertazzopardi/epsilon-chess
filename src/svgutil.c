@@ -1,21 +1,22 @@
 #include "svgutil.h"
+#include <SDL_image.h>
 
 // You must free the result if result is non-NULL.
 char *replace(char *orig, char *rep, char *with) {
-    char *result;   // the return string
-    char *ins;      // the next insert point
-    char *tmp;      // varies
-    int len_rep;    // length of rep (the string to remove)
-    int len_with;   // length of with (the string to replace rep with)
-    int len_front;  // distance between rep and end of last rep
-    int count;      // number of replacements
+    char *result;  // the return string
+    char *ins;     // the next insert point
+    char *tmp;     // varies
+    int len_rep;   // length of rep (the string to remove)
+    int len_with;  // length of with (the string to replace rep with)
+    int len_front; // distance between rep and end of last rep
+    int count;     // number of replacements
 
     // sanity checks and initialization
     if (!orig || !rep)
         return NULL;
     len_rep = strlen(rep);
     if (len_rep == 0)
-        return NULL;  // empty rep causes infinite loop during count
+        return NULL; // empty rep causes infinite loop during count
     if (!with)
         with = "";
     len_with = strlen(with);
@@ -43,7 +44,7 @@ char *replace(char *orig, char *rep, char *with) {
         len_front = ins - orig;
         tmp = strncpy(tmp, orig, len_front) + len_front;
         tmp = strcpy(tmp, with) + len_with;
-        orig += len_front + len_rep;  // move to next "end of rep"
+        orig += len_front + len_rep; // move to next "end of rep"
     }
     strcpy(tmp, orig);
     return result;
