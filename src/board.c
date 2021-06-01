@@ -1,58 +1,56 @@
 #include "board.h"
 #include "svgutil.h"
 #include "window.h"
-#include <SDL.h>
+#include <SDL_pixels.h>
+#include <SDL_render.h>
 
 #define CHESS_BOARD "./resources/864630-chess/svg/board/board.svg"
 
-const SDL_Color black = {0, 0, 0, 0};
-const SDL_Color white = {255, 255, 255, 0};
-const SDL_Color selectedColour = {150, 150, 150, 0};
-
-Board board;
-
-void makeBoard() {
+Board *makeBoard(Window *mainWindow) {
+    Board *board = malloc(1 * sizeof(*board));
     long fsize;
     char *string = openFile(CHESS_BOARD, &fsize);
-    board.texture = makeTexture(mainWindow.rend, string, fsize);
+    board->texture = makeTexture(mainWindow->rend, string, fsize);
     free(string);
     string = NULL;
+
     int w = 0;
     int h = 0;
-    SDL_QueryTexture(board.texture, NULL, NULL, &w, &h);
+    SDL_QueryTexture(board->texture, NULL, NULL, &w, &h);
 
-    board.rect = calloc(1, sizeof(*board.rect));
-    board.rect->h = HEIGHT;
-    board.rect->w = WIDTH;
-    board.rect->x = 0;
-    board.rect->y = 0;
+    board->rect = malloc(1 * sizeof(*board->rect));
+    board->rect->h = HEIGHT;
+    board->rect->w = WIDTH;
+    board->rect->x = 0;
+    board->rect->y = 0;
     //
 
-    const int squareWidth = WIDTH / ROW_COUNT;
+    // const int squareWidth = WIDTH / ROW_COUNT;
 
-    for (size_t i = 0; i < ROW_COUNT; i++) {
-        for (size_t j = 0; j < ROW_COUNT; j++) {
-            Square square;
+    // for (size_t i = 0; i < ROW_COUNT; i++) {
+    //     for (size_t j = 0; j < ROW_COUNT; j++) {
+    //         Square square;
 
-            square.selected = false;
+    //         square.selected = false;
 
-            // dimentions
-            square.rect.w = squareWidth;
-            square.rect.h = squareWidth;
+    //         // dimentions
+    //         square.rect->w = squareWidth;
+    //         square.rect->h = squareWidth;
 
-            // location
-            square.rect.x = squareWidth * i;
-            square.rect.y = squareWidth * j;
+    //         // location
+    //         square.rect->x = squareWidth * i;
+    //         square.rect->y = squareWidth * j;
 
-            // colour
-            // square.colour = (i + j) % 2 == 0 ? white : black;
+    //         // colour
+    //         // square.colour = (i + j) % 2 == 0 ? white : black;
 
-            board.squares[i][j] = square;
-        }
-    }
+    //         board.squares[i][j] = square;
+    //     }
+    // }
+    return board;
 }
 
-void drawBoard() {
+void drawBoard(Window *mainWindow, Board *board) {
     // for (size_t i = 0; i < ROW_COUNT; i++) {
     //     for (size_t j = 0; j < ROW_COUNT; j++) {
     //         SDL_Color c = board.squares[i][j].selected ? selectedColour
@@ -62,20 +60,22 @@ void drawBoard() {
     //     }
     // }
 
-    SDL_RenderCopy(mainWindow.rend, board.texture, NULL, board.rect);
+    SDL_RenderCopy(mainWindow->rend, board->texture, NULL, board->rect);
 }
 
-void toggleBoardSquare(const SDL_Point *mousePos, Square **square) {
-    SDL_Point pos = getPos(mousePos->x, mousePos->y);
+// void toggleBoardSquare(const SDL_Point *mousePos, Square **square) {
+//     // SDL_Point pos = getPos(mousePos->x, mousePos->y);
 
-    if (SDL_PointInRect(mousePos, &board.squares[pos.x][pos.y].rect)) {
-        if (*square != NULL)
-            (*square)->selected = !(*square)->selected;
+//     printf("%d, %d", mousePos->x, (*square)->selected);
 
-        *square = &board.squares[pos.x][pos.y];
-        board.squares[pos.x][pos.y].selected = !board.squares[pos.x][pos.y].selected;
-    }
-}
+//     // if (SDL_PointInRect(mousePos, board.squares[pos.x][pos.y].rect)) {
+//     //     if (*square != NULL)
+//     //         (*square)->selected = !(*square)->selected;
+
+//     //     *square = &board.squares[pos.x][pos.y];
+//     //     board.squares[pos.x][pos.y].selected = !board.squares[pos.x][pos.y].selected;
+//     // }
+// }
 
 SDL_Point getPos(int x, int y) {
     int lenX = floor(log10(x)) + 1;
@@ -94,7 +94,13 @@ SDL_Point getPos(int x, int y) {
     return point;
 }
 
-void cleanUpBoard() {
-    SDL_DestroyTexture(board.texture);
-    board.texture = NULL;
+void cleanUpBoard(Board *board) {
+    SDL_DestroyTexture(board->texture);
+    board->texture = NULL;
+
+    free(board->rect);
+    board->rect = NULL;
+
+    free(board);
+    board = NULL;
 }

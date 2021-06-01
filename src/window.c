@@ -2,133 +2,139 @@
 #include "board.h"
 #include "piece.h"
 #include <SDL.h>
+#include <SDL_events.h>
 #include <SDL_image.h>
 
 #define SQUARE_COUNT 64
 #define TITLE "Chess"
 #define FRAME_DELAY 1000 / 60
 
-Window mainWindow;
-
-void handleEvents(SDL_Event *event, bool *running, MouseEvent *mEvent) {
-    while (SDL_PollEvent(event)) {
-        switch (event->type) {
+void handleEvents(char *running, MouseEvent *mEvent, Board *board) {
+    while (SDL_PollEvent(mEvent->event)) {
+        switch (mEvent->event->type) {
         case SDL_QUIT:
             *running = !running;
             break;
         case SDL_MOUSEBUTTONUP:
-            if (mEvent->LMBDown && event->button.button == SDL_BUTTON_LEFT) {
+            if (mEvent->LMBDown && mEvent->event->button.button == SDL_BUTTON_LEFT) {
                 if (mEvent->piece->rect != NULL) {
-                    if (canMove(mEvent)) {
-                        checkIfFirstMove(mEvent);
-                        board.moveCount++;
+                    if (canMove(mEvent, board)) {
+                        checkIfFirstMove(mEvent, board);
+                        board->moveCount++;
 
                         alignPiece(mEvent);
                     } else {
-                        mEvent->piece->rect->x = mEvent->oldPos.x;
-                        mEvent->piece->rect->y = mEvent->oldPos.y;
+                        mEvent->piece->rect->x = mEvent->oldPos->x;
+                        mEvent->piece->rect->y = mEvent->oldPos->y;
                     }
                 }
-                mEvent->LMBDown = false;
+                mEvent->LMBDown = 0;
                 mEvent->piece->rect = NULL;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            if (!mEvent->LMBDown && event->button.button == SDL_BUTTON_LEFT) {
-                mEvent->LMBDown = true;
-                checkIfPiece(mEvent, &board.p1);
-                checkIfPiece(mEvent, &board.p2);
+            if (!mEvent->LMBDown && mEvent->event->button.button == SDL_BUTTON_LEFT) {
+                mEvent->LMBDown = 1;
+                checkIfPiece(mEvent, &board->p1);
+                checkIfPiece(mEvent, &board->p2);
 
                 // save old position
                 if (mEvent->piece->rect) {
-                    mEvent->oldPos.x = mEvent->piece->rect->x;
-                    mEvent->oldPos.y = mEvent->piece->rect->y;
+                    mEvent->oldPos->x = mEvent->piece->rect->x;
+                    mEvent->oldPos->y = mEvent->piece->rect->y;
                 }
 
-                toggleBoardSquare(&mEvent->mousePos, &mEvent->square);
+                // toggleBoardSquare(mEvent->mousePos, &mEvent->square);
             }
             break;
         case SDL_MOUSEMOTION: {
-            mEvent->mousePos.x = event->motion.x;
-            mEvent->mousePos.y = event->motion.y;
+            mEvent->mousePos->x = mEvent->event->motion.x;
+            mEvent->mousePos->y = mEvent->event->motion.y;
 
             if (mEvent->LMBDown && mEvent->piece->rect != NULL) {
-                mEvent->piece->rect->x = mEvent->mousePos.x - mEvent->offset.x;
-                mEvent->piece->rect->y = mEvent->mousePos.y - mEvent->offset.y;
+                mEvent->piece->rect->x = mEvent->mousePos->x - mEvent->offset->x;
+                mEvent->piece->rect->y = mEvent->mousePos->y - mEvent->offset->y;
             }
         } break;
         }
     }
 }
 
-void gameLoop() {
+void gameLoop(Window *mainWindow, Board *board) {
     // controls annimation loop
-    bool running = true;
-
-    SDL_Event event = {0};
+    char running = 1;
 
     MouseEvent mEvent = {0};
-    mEvent.piece = calloc(1, sizeof(*mEvent.piece));
+    mEvent.piece = malloc(1 * sizeof(*mEvent.piece));
+    mEvent.mousePos = malloc(1 * sizeof(*mEvent.mousePos));
+    mEvent.offset = malloc(1 * sizeof(*mEvent.offset));
+    mEvent.oldPos = malloc(1 * sizeof(*mEvent.oldPos));
+    mEvent.event = malloc(1 * sizeof(*mEvent.event));
 
     // annimation loop
     while (running) {
-        handleEvents(&event, &running, &mEvent);
+        handleEvents(&running, &mEvent, board);
 
-        SDL_SetRenderDrawColor(mainWindow.rend, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(mainWindow->rend, 0, 0, 0, 255);
 
         // clears the screen
-        SDL_RenderClear(mainWindow.rend);
+        SDL_RenderClear(mainWindow->rend);
 
-        drawBoard();
+        drawBoard(mainWindow, board);
 
-        drawPieces(mainWindow.rend);
+        drawPieces(mainWindow, board);
 
         // triggers the double buffers for multiple rendering
-        SDL_RenderPresent(mainWindow.rend);
+        SDL_RenderPresent(mainWindow->rend);
 
         // calculates to 60 fps
         SDL_Delay(FRAME_DELAY);
     }
 
     free(mEvent.piece);
-}
+    free(mEvent.mousePos);
+    free(mEvent.offset);
+    free(mEvent.oldPos);
+    free(mEvent.event);
 
-void cleanUpWindow() {
-    // destroy renderer
-    SDL_DestroyRenderer(mainWindow.rend);
-
-    // destroy window
-    SDL_DestroyWindow(mainWindow.win);
-
-    mainWindow.win = NULL;
-    mainWindow.rend = NULL;
-
-    IMG_Quit();
-    // close SDL
-    SDL_Quit();
+    mEvent.piece = NULL;
+    mEvent.mousePos = NULL;
+    mEvent.offset = NULL;
+    mEvent.oldPos = NULL;
+    mEvent.oldPos = NULL;
 }
 
 void initialise() {
     // retutns zero on success else non-zero
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        printf("error initializing SDL: %s\n", SDL_GetError());
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        // printf("error initializing SDL: %s\n", SDL_GetError());
         exit(0);
     }
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+    Window *mainWindow = malloc(1 * sizeof(*mainWindow));
+    mainWindow->win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
 
-    mainWindow.win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
+    mainWindow->rend = SDL_CreateRenderer(mainWindow->win, -1, SDL_RENDERER_ACCELERATED);
 
-    mainWindow.rend = SDL_CreateRenderer(mainWindow.win, -1, SDL_RENDERER_ACCELERATED);
+    Board *board = makeBoard(mainWindow);
 
-    makeBoard();
+    makePieces(mainWindow, board);
 
-    makePieces(mainWindow.rend);
+    gameLoop(mainWindow, board);
 
-    gameLoop();
+    cleanUpPieces(board);
+    cleanUpBoard(board);
 
-    cleanUpPieces();
-    cleanUpWindow();
-    cleanUpBoard();
+    // destroy renderer
+    SDL_DestroyRenderer(mainWindow->rend);
+
+    // destroy window
+    SDL_DestroyWindow(mainWindow->win);
+
+    mainWindow->win = NULL;
+    mainWindow->rend = NULL;
+
+    IMG_Quit();
+    // close SDL
+    SDL_Quit();
 }

@@ -1,10 +1,11 @@
 #ifndef __SVG_UTIL__
 #define __SVG_UTIL__
 
-#include <SDL.h>
-
 #define BLACK "#000000"
 #define WHITE "#FFFFFF"
+
+typedef struct SDL_Texture SDL_Texture;
+typedef struct SDL_Renderer SDL_Renderer;
 
 typedef struct {
     SDL_Texture *black;

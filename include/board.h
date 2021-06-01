@@ -1,50 +1,37 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
-#include <SDL.h>
-#include <stdbool.h>
-
 #define WIDTH 800
 #define HEIGHT 800
 #define ROW_COUNT 8
 
-typedef struct Square {
-    SDL_Rect rect;
-    bool selected;
-} Square;
+typedef struct SDL_Rect SDL_Rect;
+typedef struct SDL_Texture SDL_Texture;
+typedef struct SDL_Point SDL_Point;
 
-typedef struct Piece {
-    char initial;
-    SDL_Texture *texture;
-    SDL_Rect *rect;
-    bool firstMove;
-    char player;
-} Piece;
+typedef struct Piece Piece;
+typedef struct Board Board;
+typedef struct Window Window;
 
 typedef struct Player {
     Piece *pieces;
-    int count;
+    char count;
 } Player;
 
-typedef struct {
+struct Board {
     Player p1;
     Player p2;
-    unsigned int moveCount;
-    Square squares[ROW_COUNT][ROW_COUNT];
+    unsigned char moveCount;
     SDL_Texture *texture;
     SDL_Rect *rect;
-} Board;
+};
 
-extern Board board;
+Board *makeBoard(Window *);
 
-void makeBoard();
-
-void drawBoard();
-
-void toggleBoardSquare(const SDL_Point *, Square **);
+void drawBoard(Window *, Board *);
 
 SDL_Point getPos(int, int);
 
-void cleanUpBoard();
+void cleanUpBoard(Board *);
 
 #endif

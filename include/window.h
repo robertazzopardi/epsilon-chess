@@ -1,28 +1,29 @@
 #ifndef _WINDOW_h_
 #define _WINDOW_h_
 
-#include <SDL.h>
-#include <stdbool.h>
+typedef struct SDL_Point SDL_Point;
+typedef struct SDL_Window SDL_Window;
+typedef struct SDL_Renderer SDL_Renderer;
+typedef union SDL_Event SDL_Event;
 
 typedef struct Piece Piece;
-
-typedef struct Square Square;
+typedef struct Window Window;
 
 typedef struct MouseEvent {
-    bool LMBDown;
-    SDL_Point mousePos;
-    SDL_Point offset;
+    char LMBDown;
+    SDL_Point *mousePos;
+    SDL_Point *offset;
     Piece *piece;
-    SDL_Point oldPos;
-    Square *square;
+    SDL_Point *oldPos;
+    SDL_Event *event;
 } MouseEvent;
 
-typedef struct {
+struct Window {
     SDL_Window *win;
     SDL_Renderer *rend;
-} Window;
+};
 
-extern Window mainWindow;
+// extern Window mainWindow;
 
 void initialise();
 
