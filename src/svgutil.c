@@ -1,6 +1,9 @@
 #include "svgutil.h"
 #include <SDL_image.h>
 
+#define BLACK "#000000"
+#define WHITE "#FFFFFF"
+
 // You must free the result if result is non-NULL.
 char *replace(char *orig, char *rep, char *with) {
     char *result;  // the return string
@@ -67,28 +70,31 @@ char *openFile(const char *inputFilename, long *fsize) {
 }
 
 SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
     SDL_RWops *rw = SDL_RWFromConstMem(string, fsize);
-    SDL_Surface *surface = IMG_Load_RW(rw, 1);
+    SDL_Surface *surface = IMG_LoadSVG_RW(rw);
+
     return SDL_CreateTextureFromSurface(renderer, surface);
 }
 
 TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
     long fsize;
-    char *string = openFile(inputFilename, &fsize);
+    char *black = openFile(inputFilename, &fsize);
 
     char *white;
-    if (strstr(string, BLACK) != NULL) {
-        white = replace(string, BLACK, WHITE);
+    if (strstr(black, BLACK) != NULL) {
+        white = replace(black, BLACK, WHITE);
     } else {
         white = malloc(fsize * sizeof(*white));
     }
 
     TwoToneTexture *textures = malloc(1 * sizeof(*textures));
-    textures->black = makeTexture(renderer, string, fsize);
+    textures->black = makeTexture(renderer, black, fsize);
     textures->white = makeTexture(renderer, white, fsize);
 
-    free(string);
-    string = NULL;
+    free(black);
+    black = NULL;
     free(white);
     white = NULL;
 

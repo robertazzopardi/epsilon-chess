@@ -23,8 +23,6 @@ struct Window {
     SDL_Renderer *rend;
 };
 
-// extern Window mainWindow;
-
 void initialise();
 
 #endif

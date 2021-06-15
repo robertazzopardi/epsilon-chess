@@ -16,13 +16,14 @@ void handleEvents(char *running, MouseEvent *mEvent, Board *board) {
             *running = !running;
             break;
         case SDL_MOUSEBUTTONUP:
-            if (mEvent->LMBDown && mEvent->event->button.button == SDL_BUTTON_LEFT) {
+            if (mEvent->LMBDown &&
+                mEvent->event->button.button == SDL_BUTTON_LEFT) {
                 if (mEvent->piece->rect != NULL) {
                     if (canMove(mEvent, board)) {
                         checkIfFirstMove(mEvent, board);
                         board->moveCount++;
 
-                        alignPiece(mEvent);
+                        alignPiece(mEvent, board);
                     } else {
                         mEvent->piece->rect->x = mEvent->oldPos->x;
                         mEvent->piece->rect->y = mEvent->oldPos->y;
@@ -33,10 +34,11 @@ void handleEvents(char *running, MouseEvent *mEvent, Board *board) {
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            if (!mEvent->LMBDown && mEvent->event->button.button == SDL_BUTTON_LEFT) {
+            if (!mEvent->LMBDown &&
+                mEvent->event->button.button == SDL_BUTTON_LEFT) {
                 mEvent->LMBDown = 1;
-                checkIfPiece(mEvent, &board->p1);
-                checkIfPiece(mEvent, &board->p2);
+                checkIfPiece(mEvent, board->p1);
+                checkIfPiece(mEvent, board->p2);
 
                 // save old position
                 if (mEvent->piece->rect) {
@@ -52,8 +54,10 @@ void handleEvents(char *running, MouseEvent *mEvent, Board *board) {
             mEvent->mousePos->y = mEvent->event->motion.y;
 
             if (mEvent->LMBDown && mEvent->piece->rect != NULL) {
-                mEvent->piece->rect->x = mEvent->mousePos->x - mEvent->offset->x;
-                mEvent->piece->rect->y = mEvent->mousePos->y - mEvent->offset->y;
+                mEvent->piece->rect->x =
+                    mEvent->mousePos->x - mEvent->offset->x;
+                mEvent->piece->rect->y =
+                    mEvent->mousePos->y - mEvent->offset->y;
             }
         } break;
         }
@@ -71,7 +75,7 @@ void gameLoop(Window *mainWindow, Board *board) {
     mEvent.oldPos = malloc(1 * sizeof(*mEvent.oldPos));
     mEvent.event = malloc(1 * sizeof(*mEvent.event));
 
-    // annimation loop
+    // Main loop
     while (running) {
         handleEvents(&running, &mEvent, board);
 
@@ -80,7 +84,7 @@ void gameLoop(Window *mainWindow, Board *board) {
         // clears the screen
         SDL_RenderClear(mainWindow->rend);
 
-        drawBoard(mainWindow, board);
+        SDL_RenderCopy(mainWindow->rend, board->texture, NULL, board->rect);
 
         drawPieces(mainWindow, board);
 
@@ -101,7 +105,7 @@ void gameLoop(Window *mainWindow, Board *board) {
     mEvent.mousePos = NULL;
     mEvent.offset = NULL;
     mEvent.oldPos = NULL;
-    mEvent.oldPos = NULL;
+    mEvent.event = NULL;
 }
 
 void initialise() {
@@ -111,28 +115,32 @@ void initialise() {
         exit(0);
     }
 
-    Window *mainWindow = malloc(1 * sizeof(*mainWindow));
-    mainWindow->win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
 
-    mainWindow->rend = SDL_CreateRenderer(mainWindow->win, -1, SDL_RENDERER_ACCELERATED);
+    Window mainWindow = {.win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,
+                                                 SDL_WINDOWPOS_CENTERED, WIDTH,
+                                                 HEIGHT, 0)};
 
-    Board *board = makeBoard(mainWindow);
+    mainWindow.rend =
+        SDL_CreateRenderer(mainWindow.win, -1, SDL_RENDERER_ACCELERATED);
 
-    makePieces(mainWindow, board);
+    Board *board = makeBoard(&mainWindow);
 
-    gameLoop(mainWindow, board);
+    makePieces(&mainWindow, board);
+
+    gameLoop(&mainWindow, board);
 
     cleanUpPieces(board);
     cleanUpBoard(board);
 
     // destroy renderer
-    SDL_DestroyRenderer(mainWindow->rend);
+    SDL_DestroyRenderer(mainWindow.rend);
 
     // destroy window
-    SDL_DestroyWindow(mainWindow->win);
+    SDL_DestroyWindow(mainWindow.win);
 
-    mainWindow->win = NULL;
-    mainWindow->rend = NULL;
+    mainWindow.win = NULL;
+    mainWindow.rend = NULL;
 
     IMG_Quit();
     // close SDL

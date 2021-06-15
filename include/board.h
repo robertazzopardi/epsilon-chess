@@ -19,16 +19,14 @@ typedef struct Player {
 } Player;
 
 struct Board {
-    Player p1;
-    Player p2;
+    Player *p1;
+    Player *p2;
     unsigned char moveCount;
     SDL_Texture *texture;
     SDL_Rect *rect;
 };
 
 Board *makeBoard(Window *);
-
-void drawBoard(Window *, Board *);
 
 SDL_Point getPos(int, int);
 

@@ -23,6 +23,10 @@ Board *makeBoard(Window *mainWindow) {
     board->rect->w = WIDTH;
     board->rect->x = 0;
     board->rect->y = 0;
+
+    board->p1 = malloc(1 * sizeof(*board->p1));
+    board->p2 = malloc(1 * sizeof(*board->p2));
+
     //
 
     // const int squareWidth = WIDTH / ROW_COUNT;
@@ -50,18 +54,20 @@ Board *makeBoard(Window *mainWindow) {
     return board;
 }
 
-void drawBoard(Window *mainWindow, Board *board) {
-    // for (size_t i = 0; i < ROW_COUNT; i++) {
-    //     for (size_t j = 0; j < ROW_COUNT; j++) {
-    //         SDL_Color c = board.squares[i][j].selected ? selectedColour
-    //                                                    : board.squares[i][j].colour;
-    //         SDL_SetRenderDrawColor(mainWindow.rend, c.r, c.g, c.b, c.a);
-    //         SDL_RenderFillRect(mainWindow.rend, &board.squares[i][j].rect);
-    //     }
-    // }
+// void drawBoard(Window *mainWindow, Board *board) {
+//     // for (size_t i = 0; i < ROW_COUNT; i++) {
+//     //     for (size_t j = 0; j < ROW_COUNT; j++) {
+//     //         SDL_Color c = board.squares[i][j].selected ? selectedColour
+//     //                                                    :
+//     // board.squares[i][j].colour;
+//     //         SDL_SetRenderDrawColor(mainWindow.rend, c.r, c.g, c.b, c.a);
+//     //         SDL_RenderFillRect(mainWindow.rend,
+//     &board.squares[i][j].rect);
+//     //     }
+//     // }
 
-    SDL_RenderCopy(mainWindow->rend, board->texture, NULL, board->rect);
-}
+//     SDL_RenderCopy(mainWindow->rend, board->texture, NULL, board->rect);
+// }
 
 // void toggleBoardSquare(const SDL_Point *mousePos, Square **square) {
 //     // SDL_Point pos = getPos(mousePos->x, mousePos->y);
@@ -73,7 +79,8 @@ void drawBoard(Window *mainWindow, Board *board) {
 //     //         (*square)->selected = !(*square)->selected;
 
 //     //     *square = &board.squares[pos.x][pos.y];
-//     //     board.squares[pos.x][pos.y].selected = !board.squares[pos.x][pos.y].selected;
+//     //     board.squares[pos.x][pos.y].selected =
+//     !board.squares[pos.x][pos.y].selected;
 //     // }
 // }
 
@@ -89,9 +96,7 @@ SDL_Point getPos(int x, int y) {
     if (lenY <= 2)
         py = 0;
 
-    SDL_Point point = {.x = px, .y = py};
-
-    return point;
+    return (SDL_Point){.x = px, .y = py};
 }
 
 void cleanUpBoard(Board *board) {
@@ -100,6 +105,11 @@ void cleanUpBoard(Board *board) {
 
     free(board->rect);
     board->rect = NULL;
+
+    free(board->p1);
+    free(board->p2);
+    board->p1 = NULL;
+    board->p2 = NULL;
 
     free(board);
     board = NULL;
