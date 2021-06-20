@@ -1,6 +1,8 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
+#include <stdbool.h>
+
 #define WIDTH 800
 #define HEIGHT 800
 #define ROW_COUNT 8
@@ -15,20 +17,22 @@ typedef struct Window Window;
 
 typedef struct Player {
     Piece *pieces;
-    char count;
+    int count;
 } Player;
 
 struct Board {
     Player *p1;
     Player *p2;
-    unsigned char moveCount;
+    unsigned moveCount;
+    char toMove;
     SDL_Texture *texture;
     SDL_Rect *rect;
+    SDL_Rect *selectedRect;
+    bool selectedVisible;
+    Piece **pieces;
 };
 
 Board *makeBoard(Window *);
-
-SDL_Point getPos(int, int);
 
 void cleanUpBoard(Board *);
 

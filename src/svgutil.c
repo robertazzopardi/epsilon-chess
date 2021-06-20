@@ -1,11 +1,15 @@
 #include "svgutil.h"
+#include "board.h"
 #include <SDL_image.h>
 
 #define BLACK "#000000"
 #define WHITE "#FFFFFF"
 
+#define CELL_SIZE WIDTH / ROW_COUNT
+#define INSERT_AT 5
+
 // You must free the result if result is non-NULL.
-char *replace(char *orig, char *rep, char *with) {
+static char *replace(char *orig, char *rep, char *with) {
     char *result;  // the return string
     char *ins;     // the next insert point
     char *tmp;     // varies
@@ -80,7 +84,33 @@ SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
 
 TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
     long fsize;
-    char *black = openFile(inputFilename, &fsize);
+    char *string = openFile(inputFilename, &fsize);
+
+    // Add width and height parameters
+    const char fmt[] = "width=\"%d\" height=\"%d\" ";
+    long buffLen =
+        sizeof(fmt) / sizeof(char) + (floor(log10(abs(CELL_SIZE))) + 1) * 2;
+    char buffer[buffLen];
+    sprintf(buffer, fmt, CELL_SIZE, CELL_SIZE);
+    //
+    long ssLen = buffLen + fsize + 1;
+    char black[ssLen];
+    long i, j;
+
+    for (i = 0; i < INSERT_AT; i++)
+        black[i] = string[i];
+
+    for (j = 0; j < buffLen; j++)
+        black[j + i] = buffer[j];
+
+    i = j;
+
+    for (j = INSERT_AT; j < fsize; j++)
+        black[i++] = string[j];
+
+    fsize = i;
+    black[fsize] = '\0';
+    //
 
     char *white;
     if (strstr(black, BLACK) != NULL) {
@@ -93,8 +123,8 @@ TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
     textures->black = makeTexture(renderer, black, fsize);
     textures->white = makeTexture(renderer, white, fsize);
 
-    free(black);
-    black = NULL;
+    free(string);
+    string = NULL;
     free(white);
     white = NULL;
 

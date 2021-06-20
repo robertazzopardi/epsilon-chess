@@ -8,14 +8,14 @@
 CC = clang
 
 # define any compile-time flags
-CFLAGS	:= -Wall -Wextra -Werror -std=c17 -flto -ffast-math -Os -D_THREAD_SAFE `sdl2-config --cflags`
+CFLAGS	:= -Wall -Wextra -Werror -W -std=c17 -flto -ffast-math -Os -D_THREAD_SAFE `sdl2-config --cflags`
 CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -ffunction-sections -fdata-sections
 # CFLAGS  += -g
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = -lSDL2_image `sdl2-config --libs`
+LFLAGS = -lSDL2_image -lSDL2_gfx `sdl2-config --libs`
 
 # scan-build
 SCAN =		scan-build
