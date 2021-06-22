@@ -1,3 +1,14 @@
+/**
+ * @file board.h
+ * @author Robert Azzopardi-Yashi (robertazzopardi@icloud.com)
+ * @brief
+ * @version 0.1
+ * @date 2021-06-21
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
@@ -14,22 +25,23 @@ typedef struct SDL_Point SDL_Point;
 typedef struct Piece Piece;
 typedef struct Board Board;
 typedef struct Window Window;
+typedef struct Player Player;
 
-typedef struct Player {
+struct Player {
     Piece *pieces;
     int count;
-} Player;
+    Player *opposition;
+};
 
 struct Board {
     Player *p1;
     Player *p2;
-    unsigned moveCount;
+    char moveCount;
     char toMove;
     SDL_Texture *texture;
     SDL_Rect *rect;
     SDL_Rect *selectedRect;
     bool selectedVisible;
-    Piece **pieces;
 };
 
 Board *makeBoard(Window *);

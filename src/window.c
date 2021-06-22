@@ -9,200 +9,204 @@
 #define SQUARE_COUNT 64
 #define TITLE "Chess"
 #define FRAME_DELAY 1000 / 60
-#define CELL_RADIUS ((WIDTH / ROW_COUNT) / 2)
+#define WHITE_TO_MOVE "White to move!"
+#define BLACK_TO_MOVE "Black to move!"
 
-static void handleEvents(bool *running, MouseEvent *mEvent, Board *board) {
-    while (SDL_PollEvent(mEvent->event)) {
-        switch (mEvent->event->type) {
+#define PLAYER_TO_MOVE(toMove)                                                 \
+    (toMove == PLAYER_2 ? WHITE_TO_MOVE : BLACK_TO_MOVE)
+
+static void handleEvents(MouseEvent *event, Window *window,
+                         SDL_Event *sdlEvent) {
+    while (SDL_PollEvent(sdlEvent)) {
+        switch (sdlEvent->type) {
         case SDL_QUIT:
-            *running = false;
+            window->running = false;
             break;
         case SDL_MOUSEBUTTONUP:
-            if (mEvent->LMBDown &&
-                mEvent->event->button.button == SDL_BUTTON_LEFT) {
+            if (event->LMBDown && sdlEvent->button.button == SDL_BUTTON_LEFT) {
 
-                if (mEvent->pieceSelected) {
+                // if (event->pieceSelected) {
+                if (event->piece) {
 
-                    // if (canMoveFunc(mEvent, board)) {
-                    if (canMovePiece(mEvent)) {
+                    if (canMovePiece(event) &&
+                        window->board->toMove == event->piece->player) {
 
-                        board->moveCount++;
+                        window->board->toMove =
+                            window->board->toMove == PLAYER_1 ? PLAYER_2
+                                                              : PLAYER_1;
+
+                        SDL_SetWindowTitle(
+                            window->win, PLAYER_TO_MOVE(window->board->toMove));
+
+                        window->board->moveCount++;
 
                         // Align the pieces
-                        alignPiece(mEvent, board);
+                        alignPiece(event, window->board);
 
-                        // Swap the boards virtual pieces
-                        Piece p = board->pieces[mEvent->piece->rect->y / 100]
-                                               [mEvent->piece->rect->x / 100];
-                        board->pieces[mEvent->piece->rect->y / 100]
-                                     [mEvent->piece->rect->x / 100] =
-                            board->pieces[mEvent->oldPos->y / 100]
-                                         [mEvent->oldPos->x / 100];
-                        board->pieces[mEvent->oldPos->y / 100]
-                                     [mEvent->oldPos->x / 100] = p;
+                        if (event->piece->firstMove)
+                            event->piece->firstMove = false;
 
-                        if (mEvent->piece->firstMove)
-                            mEvent->piece->firstMove = false;
+                        event->piece = NULL;
 
-                        mEvent->piece = NULL;
-
-                        // printPieces(board);
+                        // printPieces(window->board);
                     } else {
-                        mEvent->piece->rect->x = mEvent->oldPos->x;
-                        mEvent->piece->rect->y = mEvent->oldPos->y;
+                        event->piece->rect->x = event->oldPos->x;
+                        event->piece->rect->y = event->oldPos->y;
                     }
                 }
-                mEvent->LMBDown = false;
-                mEvent->pieceSelected = false;
+                event->LMBDown = false;
+                // event->pieceSelected = false;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            if (!mEvent->LMBDown &&
-                mEvent->event->button.button == SDL_BUTTON_LEFT) {
-                mEvent->LMBDown = true;
+            if (!event->LMBDown && sdlEvent->button.button == SDL_BUTTON_LEFT) {
+                event->LMBDown = true;
 
-                mEvent->piece = NULL;
-                checkIfPiece(mEvent, board->p1);
-                checkIfPiece(mEvent, board->p2);
+                event->piece = NULL;
+                checkIfPiece(event, window->board->p1);
+                checkIfPiece(event, window->board->p2);
 
-                if (mEvent->piece)
-                    generateMoves(mEvent, board);
+                if (event->piece)
+                    generateMoves(event, window->board);
 
                 // Save old position
-                if (mEvent->pieceSelected) {
-                    mEvent->oldPos->x = mEvent->piece->rect->x;
-                    mEvent->oldPos->y = mEvent->piece->rect->y;
+                // if (event->pieceSelected) {
+                if (event->piece) {
+                    event->oldPos->x = event->piece->rect->x;
+                    event->oldPos->y = event->piece->rect->y;
                 }
 
-                // Toggle the colour of a square on the board
-                SDL_Point point = {mEvent->mousePos->x, mEvent->mousePos->y};
-                if (SDL_PointInRect(&point, board->selectedRect) ||
-                    !board->selectedVisible) {
-                    board->selectedVisible = !board->selectedVisible;
+                // Toggle the colour of a square on the window->board
+                SDL_Point point = {event->mousePos->x, event->mousePos->y};
+                if (SDL_PointInRect(&point, window->board->selectedRect) ||
+                    !window->board->selectedVisible) {
+                    window->board->selectedVisible =
+                        !window->board->selectedVisible;
                 }
 
-                board->selectedRect->x = (mEvent->mousePos->x / 100) * 100;
-                board->selectedRect->y = (mEvent->mousePos->y / 100) * 100;
+                window->board->selectedRect->x =
+                    (event->mousePos->x / 100) * 100;
+                window->board->selectedRect->y =
+                    (event->mousePos->y / 100) * 100;
             }
             break;
         case SDL_MOUSEMOTION: {
-            mEvent->mousePos->x = mEvent->event->motion.x;
-            mEvent->mousePos->y = mEvent->event->motion.y;
+            event->mousePos->x = sdlEvent->motion.x;
+            event->mousePos->y = sdlEvent->motion.y;
 
-            if (mEvent->LMBDown && mEvent->pieceSelected) {
-                board->selectedVisible = false;
-                mEvent->piece->rect->x =
-                    mEvent->mousePos->x - mEvent->offset->x;
-                mEvent->piece->rect->y =
-                    mEvent->mousePos->y - mEvent->offset->y;
+            // if (event->LMBDown && event->pieceSelected) {
+            if (event->LMBDown && event->piece) {
+                window->board->selectedVisible = false;
+                event->piece->rect->x = event->mousePos->x - event->offset->x;
+                event->piece->rect->y = event->mousePos->y - event->offset->y;
             }
         } break;
         }
     }
 }
 
-static void gameLoop(Window *mainWindow, Board *board) {
-    // controls annimation loop
-    bool running = true;
+static void gameLoop(Window *window) {
 
-    MouseEvent mEvent = {0};
-    mEvent.mousePos = malloc(1 * sizeof(*mEvent.mousePos));
-    mEvent.offset = malloc(1 * sizeof(*mEvent.offset));
-    // mEvent.piece = malloc(1 * sizeof(*mEvent.piece));
-    mEvent.piece = NULL;
-    mEvent.pieceSelected = false;
-    mEvent.oldPos = malloc(1 * sizeof(*mEvent.oldPos));
-    mEvent.event = malloc(1 * sizeof(*mEvent.event));
+    MouseEvent event = {0};
+    event.mousePos = malloc(1 * sizeof(*event.mousePos));
+    event.offset = malloc(1 * sizeof(*event.offset));
+    event.oldPos = malloc(1 * sizeof(*event.oldPos));
+    // event.event = malloc(1 * sizeof(*event.event));
+
+    SDL_Event sdlEvent;
+
+    const int cellRadius = (WIDTH / ROW_COUNT) / 2;
+
+    SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
     // Main loop
-    while (running) {
-        handleEvents(&running, &mEvent, board);
+    while (window->running) {
+        handleEvents(&event, window, &sdlEvent);
 
-        SDL_SetRenderDrawColor(mainWindow->rend, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(window->rend, 0, 0, 0, 255);
 
         // Clear the screen
-        SDL_RenderClear(mainWindow->rend);
+        SDL_RenderClear(window->rend);
 
         // Render board
-        SDL_RenderCopy(mainWindow->rend, board->texture, NULL, board->rect);
+        SDL_RenderCopy(window->rend, window->board->texture, NULL,
+                       window->board->rect);
 
         // Render selected square
-        if (board->selectedVisible) {
-            SDL_SetRenderDrawColor(mainWindow->rend, 100, 100, 100, 100);
-            SDL_RenderFillRect(mainWindow->rend, board->selectedRect);
+        if (window->board->selectedVisible) {
+            SDL_SetRenderDrawColor(window->rend, 100, 100, 100, 100);
+            SDL_RenderFillRect(window->rend, window->board->selectedRect);
         }
 
-        // Render possible moves
-        if (mEvent.piece && mEvent.piece->moves->count > 0) {
-            for (int i = 0; i < mEvent.piece->moves->count; i++) {
-                int mX =
-                    (mEvent.piece->moves->squares[i].x * 100) + CELL_RADIUS;
-                int mY =
-                    (mEvent.piece->moves->squares[i].y * 100) + CELL_RADIUS;
+        // Render possible moves for selected piece
+        if (event.piece && event.piece->moves->count > 0) {
+            for (int i = 0; i < event.piece->moves->count; i++) {
+                int mX = (event.piece->moves->squares[i].x * 100) + cellRadius;
+                int mY = (event.piece->moves->squares[i].y * 100) + cellRadius;
 
-                filledCircleRGBA(mainWindow->rend, mX, mY, 30, 100, 100, 100,
-                                 100);
+                filledCircleRGBA(window->rend, mX, mY, 30, 100, 100, 100, 100);
             }
         }
 
         // Render the pieces
-        drawPieces(mainWindow, board);
+        drawPieces(window, &event);
+        // Render selected piece on top
+        if (event.piece) {
+            SDL_RenderCopy(window->rend, event.piece->texture, NULL,
+                           event.piece->rect);
+        }
 
         // triggers the double buffers for multiple rendering
-        SDL_RenderPresent(mainWindow->rend);
+        SDL_RenderPresent(window->rend);
 
         // calculates to 60 fps
         SDL_Delay(FRAME_DELAY);
     }
 
-    // free(mEvent.piece);
-    free(mEvent.mousePos);
-    free(mEvent.offset);
-    free(mEvent.oldPos);
-    free(mEvent.event);
+    // free(event.piece);
+    free(event.mousePos);
+    free(event.offset);
+    free(event.oldPos);
+    // free(event.event);
 
-    // mEvent.piece = NULL;
-    mEvent.mousePos = NULL;
-    mEvent.offset = NULL;
-    mEvent.oldPos = NULL;
-    mEvent.event = NULL;
+    event.mousePos = NULL;
+    event.offset = NULL;
+    event.oldPos = NULL;
+    // event.event = NULL;
 }
 
 void initialise() {
-    // retutns zero on success else non-zero
-    if (SDL_Init(SDL_INIT_VIDEO)) {
-        // printf("error initializing SDL: %s\n", SDL_GetError());
+    // Init SDL
+    if (SDL_Init(SDL_INIT_VIDEO))
         exit(0);
-    }
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
-    Window mainWindow = {.win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,
-                                                 SDL_WINDOWPOS_CENTERED, WIDTH,
-                                                 HEIGHT, 0)};
+    Window window = {
+        .win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,
+                                SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0),
+        .running = true,
+    };
+    window.rend = SDL_CreateRenderer(window.win, -1, SDL_RENDERER_ACCELERATED);
+    window.board = makeBoard(&window);
 
-    mainWindow.rend =
-        SDL_CreateRenderer(mainWindow.win, -1, SDL_RENDERER_ACCELERATED);
+    makePieces(&window);
 
-    Board *board = makeBoard(&mainWindow);
+    gameLoop(&window);
 
-    makePieces(&mainWindow, board);
+    // Clean up
+    cleanUpPieces(window.board);
+    cleanUpBoard(window.board);
 
-    gameLoop(&mainWindow, board);
+    // Destroy window and renderer
+    SDL_DestroyRenderer(window.rend);
+    SDL_DestroyWindow(window.win);
 
-    cleanUpPieces(board);
-    cleanUpBoard(board);
+    window.win = NULL;
+    window.rend = NULL;
 
-    // destroy renderer
-    SDL_DestroyRenderer(mainWindow.rend);
-
-    // destroy window
-    SDL_DestroyWindow(mainWindow.win);
-
-    mainWindow.win = NULL;
-    mainWindow.rend = NULL;
-
+    // Quit SDL
     IMG_Quit();
-    // close SDL
     SDL_Quit();
 }

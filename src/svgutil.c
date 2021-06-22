@@ -74,7 +74,6 @@ char *openFile(const char *inputFilename, long *fsize) {
 }
 
 SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     SDL_RWops *rw = SDL_RWFromConstMem(string, fsize);
     SDL_Surface *surface = IMG_LoadSVG_RW(rw);
@@ -84,47 +83,20 @@ SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
 
 TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
     long fsize;
-    char *string = openFile(inputFilename, &fsize);
-
-    // Add width and height parameters
-    const char fmt[] = "width=\"%d\" height=\"%d\" ";
-    long buffLen =
-        sizeof(fmt) / sizeof(char) + (floor(log10(abs(CELL_SIZE))) + 1) * 2;
-    char buffer[buffLen];
-    sprintf(buffer, fmt, CELL_SIZE, CELL_SIZE);
-    //
-    long ssLen = buffLen + fsize + 1;
-    char black[ssLen];
-    long i, j;
-
-    for (i = 0; i < INSERT_AT; i++)
-        black[i] = string[i];
-
-    for (j = 0; j < buffLen; j++)
-        black[j + i] = buffer[j];
-
-    i = j;
-
-    for (j = INSERT_AT; j < fsize; j++)
-        black[i++] = string[j];
-
-    fsize = i;
-    black[fsize] = '\0';
-    //
+    char *black = openFile(inputFilename, &fsize);
 
     char *white;
-    if (strstr(black, BLACK) != NULL) {
+    if (strstr(black, BLACK) != NULL)
         white = replace(black, BLACK, WHITE);
-    } else {
+    else
         white = malloc(fsize * sizeof(*white));
-    }
 
     TwoToneTexture *textures = malloc(1 * sizeof(*textures));
     textures->black = makeTexture(renderer, black, fsize);
     textures->white = makeTexture(renderer, white, fsize);
 
-    free(string);
-    string = NULL;
+    free(black);
+    black = NULL;
     free(white);
     white = NULL;
 

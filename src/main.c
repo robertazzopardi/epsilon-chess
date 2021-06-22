@@ -11,7 +11,7 @@
 
 #include "window.h"
 
-int main() {
+int main(void) {
     initialise();
 
     return 0;

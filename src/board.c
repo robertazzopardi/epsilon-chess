@@ -1,13 +1,15 @@
 #include "board.h"
+#include "piece.h"
 #include "svgutil.h"
 #include "window.h"
-#include <SDL_pixels.h>
 #include <SDL_render.h>
 
 #define CHESS_BOARD "./assets/864630-chess/svg/board/board.svg"
 
 Board *makeBoard(Window *mainWindow) {
     Board *board = malloc(1 * sizeof(*board));
+
+    board->toMove = PLAYER_2;
 
     // Set up the Boards texture
     long fsize;
@@ -26,6 +28,8 @@ Board *makeBoard(Window *mainWindow) {
     // Set up players
     board->p1 = malloc(1 * sizeof(*board->p1));
     board->p2 = malloc(1 * sizeof(*board->p2));
+    board->p1->opposition = board->p2;
+    board->p2->opposition = board->p1;
 
     // Set up the selected rect
     board->selectedRect = malloc(1 * sizeof(*board->selectedRect));
@@ -52,13 +56,6 @@ void cleanUpBoard(Board *board) {
 
     free(board->selectedRect);
     board->selectedRect = NULL;
-
-    for (int i = 0; i < ROW_COUNT; i++) {
-        free(board->pieces[i]);
-        board->pieces[i] = NULL;
-    }
-    free(board->pieces);
-    board->pieces = NULL;
 
     free(board);
     board = NULL;
