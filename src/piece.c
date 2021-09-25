@@ -4,6 +4,7 @@
 #include "window.h"
 #include <SDL_rect.h>
 #include <SDL_render.h>
+#include <math.h>
 #include <stdlib.h>
 
 #define PAWN_IMG "./assets/864630-chess/svg/pieces/pawn.svg"
@@ -22,46 +23,57 @@
 #define QUEEN_MAX 27
 #define KING_MAX 10
 
-static int knightX[] = {2, 1, -1, -2, -2, -1, 1, 2};
-static int knightY[] = {1, 2, 2, 1, -1, -2, -2, -1};
+struct MoveConditions {
+    SDL_Point *pieceLocation;
+    Player *player;
+    Player *opposition;
+    Piece *piece;
+};
 
-static int kingX[] = {-1, -1, -1, 0, 0, 1, 1, 1};
-static int kingY[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+static char knightX[] = {2, 1, -1, -2, -2, -1, 1, 2};
+static char knightY[] = {1, 2, 2, 1, -1, -2, -2, -1};
 
-static int bishopX[] = {1, 1, -1, -1};
-static int bishopY[] = {1, -1, 1, -1};
+static char kingX[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+static char kingY[] = {-1, 0, 1, -1, 1, -1, 0, 1};
 
-static int rookX[] = {1, 0, -1, 0};
-static int rookY[] = {0, 1, 0, -1};
+static char bishopX[] = {1, 1, -1, -1};
+static char bishopY[] = {1, -1, 1, -1};
 
-static int queenX[] = {1, 1, -1, -1, 1, 0, -1, 0};
-static int queenY[] = {1, -1, 1, -1, 0, 1, 0, -1};
+static char rookX[] = {1, 0, -1, 0};
+static char rookY[] = {0, 1, 0, -1};
 
-static int pawnX[] = {-1, 1};
-static int pawn1Y[] = {1, 1};
-static int pawn2Y[] = {-1, -1};
+static char queenX[] = {1, 1, -1, -1, 1, 0, -1, 0};
+static char queenY[] = {1, -1, 1, -1, 0, 1, 0, -1};
 
-// static inline Player *getOpposition(char initial, Board *board) {
-//     return initial == PLAYER_1 ? board->p2 : board->p1;
-// }
+static char pawnX[] = {-1, 1};
+static char pawn1Y[] = {1, 1};
+static char pawn2Y[] = {-1, -1};
 
 static inline Player *getPlayer(char initial, Board *board) {
     return initial == PLAYER_1 ? board->p1 : board->p2;
 }
 
+static inline bool checkPointNexToRect(int x, int y, int j,
+                                       const Player *player) {
+    return x == player->pieces[j].rect->x / 100 &&
+           y == player->pieces[j].rect->y / 100;
+}
+
+static inline bool pointEqualsPoint(SDL_Point p1, SDL_Point p2) {
+    return p1.x == p2.x && p1.y == p2.y;
+}
+
 static bool onSameTeam(const int x, const int y, const Player *player) {
-    for (int j = 0; j < player->count; j++) {
-        if (x == player->pieces[j].rect->x / 100 &&
-            y == player->pieces[j].rect->y / 100)
+    for (int j = 0; j < player->piecesRemaining; j++) {
+        if (checkPointNexToRect(x, y, j, player))
             return true;
     }
     return false;
 }
 
 static Initial checkWhichPiece(const int x, const int y, const Player *player) {
-    for (int j = 0; j < player->count; j++) {
-        if (x == player->pieces[j].rect->x / 100 &&
-            y == player->pieces[j].rect->y / 100)
+    for (int j = 0; j < player->piecesRemaining; j++) {
+        if (checkPointNexToRect(x, y, j, player))
             return player->pieces[j].initial;
     }
     return empty;
@@ -74,48 +86,41 @@ static inline void addSquare(MoveConditions *mc, Moves *moves, int x, int y) {
     }
 }
 
-static Moves *makeMoves(int possibleMoves) {
-    Moves *moves = malloc(1 * sizeof(*moves));
-    moves->squares = malloc(possibleMoves * sizeof(*moves->squares));
+static inline void resetMoves(Moves *moves) {
+    memset(moves->squares, 0, moves->count * sizeof(*moves->squares));
     moves->count = 0;
-    return moves;
-}
-
-static void addRookBishopSquares(MoveConditions *mc, int ox, int oy,
-                                 Moves *moves) {
-    for (int j = 1; j < ROW_COUNT; j++) {
-        int nx = mc->p2->x + j * ox;
-        int ny = mc->p2->y + j * oy;
-
-        if (onSameTeam(nx, ny, mc->player))
-            break;
-
-        if (nx < ROW_COUNT && nx >= 0 && ny < ROW_COUNT && ny >= 0)
-            moves->squares[moves->count++] = (SDL_Point){nx, ny};
-
-        if (onSameTeam(nx, ny, mc->opposition))
-            break;
-    }
 }
 
 static Moves *canMoveQueenRookBishop(MoveConditions *mc) {
-    Moves *moves = makeMoves(mc->piece->maxMoves);
 
     for (int i = 0; i < mc->piece->directions; i++) {
         int ox = mc->piece->directionsX[i];
         int oy = mc->piece->directionsY[i];
 
-        addRookBishopSquares(mc, ox, oy, moves);
+        for (int j = 1; j < ROW_COUNT; j++) {
+            int nx = mc->pieceLocation->x + j * ox;
+            int ny = mc->pieceLocation->y + j * oy;
+
+            if (onSameTeam(nx, ny, mc->player))
+                break;
+
+            if (nx < ROW_COUNT && nx >= 0 && ny < ROW_COUNT && ny >= 0)
+                mc->piece->moves->squares[mc->piece->moves->count++] =
+                    (SDL_Point){nx, ny};
+
+            if (onSameTeam(nx, ny, mc->opposition))
+                break;
+        }
     }
 
-    return moves;
+    return mc->piece->moves;
 }
 
 static bool canCastle(MoveConditions *mc, Moves *moves) {
-    int y = mc->p2->y;
+    int y = mc->pieceLocation->y;
     int x;
-    for (int i = 1; i < ROW_COUNT - mc->p2->x; i++) {
-        x = mc->p2->x + i;
+    for (int i = 1; i < ROW_COUNT - mc->pieceLocation->x; i++) {
+        x = mc->pieceLocation->x + i;
         Initial initial = checkWhichPiece(x, y, mc->player);
         if (initial != rook && initial != empty) {
             break;
@@ -124,8 +129,8 @@ static bool canCastle(MoveConditions *mc, Moves *moves) {
         }
     }
 
-    for (int i = 1; i <= mc->p2->x; i++) {
-        x = mc->p2->x - i;
+    for (int i = 1; i <= mc->pieceLocation->x; i++) {
+        x = mc->pieceLocation->x - i;
         Initial initial = checkWhichPiece(x, y, mc->player);
         if (initial != rook && initial != empty) {
             break;
@@ -138,64 +143,154 @@ static bool canCastle(MoveConditions *mc, Moves *moves) {
 }
 
 static Moves *canMoveKingKnight(MoveConditions *mc) {
-    Moves *moves = NULL;
-
-    moves = makeMoves(mc->piece->maxMoves);
 
     for (int i = 0; i < mc->piece->directions; i++) {
-        int nx = mc->p2->x + mc->piece->directionsX[i];
-        int ny = mc->p2->y + mc->piece->directionsY[i];
+        int nx = mc->pieceLocation->x + mc->piece->directionsX[i];
+        int ny = mc->pieceLocation->y + mc->piece->directionsY[i];
 
         if (nx < ROW_COUNT && nx >= 0 && ny < ROW_COUNT && ny >= 0 &&
             !onSameTeam(nx, ny, mc->player)) {
-            moves->squares[moves->count++] = (SDL_Point){nx, ny};
+
+            mc->piece->moves->squares[mc->piece->moves->count++] =
+                (SDL_Point){nx, ny};
         }
     }
 
+    // printf("hello\n");
+
     if (mc->piece->initial == king && mc->piece->firstMove) {
-        canCastle(mc, moves);
+        canCastle(mc, mc->piece->moves);
     }
 
-    return moves;
+    return mc->piece->moves;
 }
 
 static Moves *canMovePawn(MoveConditions *mc) {
-
-    Moves *moves = makeMoves(mc->piece->maxMoves);
 
     int count = mc->piece->firstMove ? 2 : 1;
     int offset = mc->piece->player == PLAYER_1 ? 1 : -1;
 
     for (int i = 1; i <= count; i++) {
 
-        if (onSameTeam(mc->p2->x, mc->p2->y + i * offset, mc->opposition) ||
-            onSameTeam(mc->p2->x, mc->p2->y + i * offset, mc->player)) {
+        if (onSameTeam(mc->pieceLocation->x, mc->pieceLocation->y + i * offset,
+                       mc->opposition) ||
+            onSameTeam(mc->pieceLocation->x, mc->pieceLocation->y + i * offset,
+                       mc->player)) {
             break;
         } else {
-            moves->squares[moves->count++] =
-                (SDL_Point){mc->p2->x, mc->p2->y + i * offset};
+            mc->piece->moves->squares[mc->piece->moves->count++] = (SDL_Point){
+                mc->pieceLocation->x, mc->pieceLocation->y + i * offset};
         }
     }
 
     for (int i = 0; i < mc->piece->directions; i++) {
-        addSquare(mc, moves, mc->p2->x + mc->piece->directionsX[i],
-                  mc->p2->y + mc->piece->directionsY[i]);
+        addSquare(mc, mc->piece->moves,
+                  mc->pieceLocation->x + mc->piece->directionsX[i],
+                  mc->pieceLocation->y + mc->piece->directionsY[i]);
     }
 
-    return moves;
+    return mc->piece->moves;
 }
 
-void generateMoves(MouseEvent *event, Board *board) {
-    SDL_Point p2 = {event->mousePos->x / 100, event->mousePos->y / 100};
+void calculateIfMovesAreValid(Piece *piece __unused, Player *player) {
+    SDL_Point playerKingLocation;
+    for (unsigned char i = 0; i < player->piecesRemaining; i++) {
+        if (player->pieces[i].initial == king) {
+            playerKingLocation = (SDL_Point){player->pieces[i].rect->x / 100,
+                                             player->pieces[i].rect->y / 100};
+            break;
+        }
+    }
 
-    Player *player = getPlayer(event->piece->player, board);
+    Player *opposition = player->opposition;
+    for (unsigned char i = 0; i < opposition->piecesRemaining; i++) {
+        Piece offensivePiece = opposition->pieces[i];
 
-    MoveConditions conditions = {.p2 = &p2,
+        SDL_Point offensivePieceLocation = {offensivePiece.rect->x / 100,
+                                            offensivePiece.rect->y / 100};
+
+        unsigned char start = 0, end = 0;
+        SDL_Point *routeToCheck = NULL;
+        int len = 0;
+        for (unsigned char l = 0; l < offensivePiece.moves->count; l++) {
+            if (floor(hypot(offensivePiece.moves->squares[l].x -
+                                offensivePieceLocation.x,
+                            offensivePiece.moves->squares[l].y -
+                                offensivePieceLocation.y)) == 1) {
+                start = l;
+            }
+
+            if (pointEqualsPoint(offensivePiece.moves->squares[l],
+                                 playerKingLocation)) {
+                end = l;
+
+                len = end - start;
+                len++;
+                routeToCheck = malloc(len * sizeof(*routeToCheck));
+
+                memcpy(routeToCheck, offensivePiece.moves->squares + start,
+                       len * sizeof(*routeToCheck));
+                routeToCheck[len - 1] = offensivePieceLocation;
+
+                // for (int x = 0; x < len; x++) {
+                //     printf("%d %d\n", routeToCheck[x].x, routeToCheck[x].y);
+                // }
+
+                break;
+            }
+        }
+
+        Moves *opPieceMoves = offensivePiece.moves;
+        for (unsigned char j = 0; j < opPieceMoves->count; j++) {
+            SDL_Point piecePossibleMovePosition = {opPieceMoves->squares[j].x,
+                                                   opPieceMoves->squares[j].y};
+
+            if (pointEqualsPoint(playerKingLocation,
+                                 piecePossibleMovePosition)) {
+
+                SDL_Point *onlyMoves =
+                    malloc(piece->moves->count * sizeof(*onlyMoves));
+                int onlyMovesCount = 0;
+
+                for (unsigned char x = 0; x < piece->moves->count; x++) {
+                    for (unsigned char y = 0; y < len; y++) {
+                        if (pointEqualsPoint(piece->moves->squares[x],
+                                             routeToCheck[y]) &&
+                            piece->initial != king) {
+                            onlyMoves[onlyMovesCount++] =
+                                piece->moves->squares[x];
+                        }
+                    }
+                }
+
+                onlyMoves =
+                    realloc(onlyMoves, onlyMovesCount * sizeof(*onlyMoves));
+
+                memcpy(piece->moves->squares, onlyMoves,
+                       onlyMovesCount * sizeof(*piece->moves->squares));
+
+                piece->moves->count = onlyMovesCount;
+            }
+        }
+
+        if (routeToCheck != NULL) {
+            free(routeToCheck);
+            routeToCheck = NULL;
+        }
+    }
+}
+
+void generatePieceMoves(Piece *piece, Player *player) {
+    SDL_Point pieceLocation = {piece->rect->x / 100, piece->rect->y / 100};
+
+    resetMoves(piece->moves);
+
+    MoveConditions conditions = {.pieceLocation = &pieceLocation,
                                  .player = player,
                                  .opposition = player->opposition,
-                                 .piece = event->piece};
+                                 .piece = piece};
 
-    event->piece->moves = event->piece->canMove(&conditions);
+    piece->moves = piece->canMove(&conditions);
 }
 
 void alignPiece(MouseEvent *event, Board *board) {
@@ -207,7 +302,6 @@ void alignPiece(MouseEvent *event, Board *board) {
     event->piece->rect->x = x;
     event->piece->rect->y = y;
 
-    // Player *opposition = getOpposition(event->piece->player, board);
     Player *player = getPlayer(event->piece->player, board);
 
     // Castling
@@ -219,7 +313,7 @@ void alignPiece(MouseEvent *event, Board *board) {
             v = -100;
         }
 
-        for (int i = 0; i < player->count; i++) {
+        for (int i = 0; i < player->piecesRemaining; i++) {
             if ((x / 100) + m == player->pieces[i].rect->x / 100 &&
                 (y / 100) == player->pieces[i].rect->y / 100) {
                 player->pieces[i].rect->x = x + v;
@@ -228,7 +322,7 @@ void alignPiece(MouseEvent *event, Board *board) {
     }
 
     // Check if moved piece is on another piece
-    for (int i = 0; i < player->opposition->count; i++) {
+    for (int i = 0; i < player->opposition->piecesRemaining; i++) {
         // Capture the oppositions piece
         if (player->opposition->pieces[i].rect->x == x &&
             player->opposition->pieces[i].rect->y == y &&
@@ -236,11 +330,11 @@ void alignPiece(MouseEvent *event, Board *board) {
 
             free(player->opposition->pieces[i].rect);
 
-            for (int j = i; j < player->opposition->count - 1; j++)
+            for (int j = i; j < player->opposition->piecesRemaining - 1; j++)
                 player->opposition->pieces[j] =
                     player->opposition->pieces[j + 1];
 
-            player->opposition->count--;
+            player->opposition->piecesRemaining--;
 
             break;
         }
@@ -261,15 +355,12 @@ bool canMovePiece(const MouseEvent *event) {
 }
 
 void checkIfPiece(MouseEvent *event, Player *player) {
-    for (int i = 0; i < player->count; i++) {
+    for (int i = 0; i < player->piecesRemaining; i++) {
         if (SDL_PointInRect(event->mousePos, player->pieces[i].rect)) {
 
             event->piece = &player->pieces[i];
             event->offset->x = event->mousePos->x - player->pieces[i].rect->x;
             event->offset->y = event->mousePos->y - player->pieces[i].rect->y;
-            // event->pieceSelected = true;
-
-            // printf("%d %d\n", event->offset->x, event->offset->y);
 
             break;
         }
@@ -287,33 +378,35 @@ void checkIfPiece(MouseEvent *event, Player *player) {
 // }
 
 static Piece makePiece(char initial, SDL_Texture *texture, SDL_Point *pos,
-                       char player, int maxMoves, void *canMoveFunc,
-                       int *directionsX, int *directionsY, int directions) {
-    // int w;
-    // int h;
-    // SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+                       char player, unsigned char maxPossibleMoves,
+                       void *canMoveFunc, char *directionsX, char *directionsY,
+                       char directions) {
 
     SDL_Rect *rect = malloc(1 * sizeof *rect);
 
     rect->h = HEIGHT / ROW_COUNT;
     rect->w = WIDTH / ROW_COUNT;
 
-    // rect->h = h;
-    // rect->w = w;
-
     rect->x = pos->x;
     rect->y = pos->y;
 
-    return (Piece){.initial = initial,
-                   .player = player,
-                   .texture = texture,
-                   .firstMove = true,
-                   .canMove = canMoveFunc,
-                   .rect = rect,
-                   .maxMoves = maxMoves,
-                   .directionsX = directionsX,
-                   .directionsY = directionsY,
-                   .directions = directions};
+    Moves *moves = malloc(1 * sizeof(*moves));
+    moves->squares = malloc(maxPossibleMoves * sizeof(*moves->squares));
+    moves->count = 0;
+
+    return (Piece){
+        .initial = initial,
+        .player = player,
+        .texture = texture,
+        .firstMove = true,
+        .canMove = canMoveFunc,
+        .rect = rect,
+        .maxPossibleMoves = maxPossibleMoves,
+        .directionsX = directionsX,
+        .directionsY = directionsY,
+        .directions = directions,
+        .moves = moves,
+    };
 }
 
 void makePieces(Window *mainWindow) {
@@ -324,8 +417,8 @@ void makePieces(Window *mainWindow) {
     TwoToneTexture *queenTexture = getTexture(mainWindow->rend, QUEEN_IMG);
     TwoToneTexture *kingTexture = getTexture(mainWindow->rend, KING_IMG);
 
-    mainWindow->board->p1->count = PIECE_COUNT;
-    mainWindow->board->p2->count = PIECE_COUNT;
+    mainWindow->board->p1->piecesRemaining = PIECE_COUNT;
+    mainWindow->board->p2->piecesRemaining = PIECE_COUNT;
 
     mainWindow->board->p1->pieces =
         malloc(PIECE_COUNT * sizeof(*mainWindow->board->p1->pieces));
@@ -421,7 +514,7 @@ void makePieces(Window *mainWindow) {
 }
 
 void drawPieces(Window *mainWindow, MouseEvent *event) {
-    for (int i = 0; i < mainWindow->board->p1->count; i++) {
+    for (int i = 0; i < mainWindow->board->p1->piecesRemaining; i++) {
         if (event->piece &&
             SDL_RectEquals(event->piece->rect,
                            mainWindow->board->p1->pieces[i].rect)) {
@@ -432,7 +525,7 @@ void drawPieces(Window *mainWindow, MouseEvent *event) {
                        mainWindow->board->p1->pieces[i].texture, NULL,
                        mainWindow->board->p1->pieces[i].rect);
     }
-    for (int i = 0; i < mainWindow->board->p2->count; i++) {
+    for (int i = 0; i < mainWindow->board->p2->piecesRemaining; i++) {
         if (event->piece &&
             SDL_RectEquals(event->piece->rect,
                            mainWindow->board->p2->pieces[i].rect)) {
@@ -446,7 +539,7 @@ void drawPieces(Window *mainWindow, MouseEvent *event) {
 }
 
 static void cleanUpPlayer(Player *player) {
-    for (int i = 0; i < player->count; i++) {
+    for (int i = 0; i < player->piecesRemaining; i++) {
         SDL_DestroyTexture(player->pieces[i].texture);
         player->pieces[i].texture = NULL;
 

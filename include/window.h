@@ -20,7 +20,6 @@ typedef struct SDL_Renderer SDL_Renderer;
 typedef union SDL_Event SDL_Event;
 
 typedef struct Piece Piece;
-typedef struct Window Window;
 typedef struct Board Board;
 
 typedef struct MouseEvent {
@@ -28,17 +27,15 @@ typedef struct MouseEvent {
     SDL_Point *mousePos;
     SDL_Point *offset;
     Piece *piece;
-    // bool pieceSelected;
     SDL_Point *oldPos;
-    // SDL_Event *event;
 } MouseEvent;
 
-struct Window {
+typedef struct Window {
     SDL_Window *win;
     SDL_Renderer *rend;
     Board *board;
     bool running;
-};
+} Window;
 
 void initialise();
 

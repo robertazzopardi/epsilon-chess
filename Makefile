@@ -8,7 +8,7 @@
 CC = clang
 
 # define any compile-time flags
-CFLAGS	:= -Wall -Wextra -Werror -W -std=c17 -flto -ffast-math -Oz -D_THREAD_SAFE `sdl2-config --cflags`
+CFLAGS	:= -Wall -Wextra -Werror -W -std=c17 -ffast-math -Oz -D_THREAD_SAFE `sdl2-config --cflags`
 CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -ffunction-sections -fdata-sections
 # CFLAGS  += -g
 
@@ -93,6 +93,7 @@ $(MAIN): $(OBJECTS)
 clean:
 	$(RM) $(OUTPUTMAIN)
 	$(RM) $(call FIXPATH,$(OBJECTS))
+	$(RM) *.plist
 	@echo Cleanup complete!
 
 run: all
@@ -102,10 +103,5 @@ run: all
 check: clean all
 	cppcheck -f --enable=all --inconclusive --check-library --debug-warnings --suppress=missingIncludeSystem --check-config $(INCLUDES) ./$(SRC)
 
-analyse:
-# scan-build make
-	clear
-	for file in $(SOURCES) ; do \
-    	$(SCAN) $(SCANFLAGS) $(CC) $(CFLAGS) --analyze -fsanitize=address $(INCLUDES) $$file ; \
-	done
-	rm *.plist
+scan-build: clean
+	scan-build make

@@ -6,7 +6,7 @@
 
 #define CHESS_BOARD "./assets/864630-chess/svg/board/board.svg"
 
-Board *makeBoard(Window *mainWindow) {
+Board *makeBoard(SDL_Renderer *renderer) {
     Board *board = malloc(1 * sizeof(*board));
 
     board->toMove = PLAYER_2;
@@ -14,7 +14,7 @@ Board *makeBoard(Window *mainWindow) {
     // Set up the Boards texture
     long fsize;
     char *string = openFile(CHESS_BOARD, &fsize);
-    board->texture = makeTexture(mainWindow->rend, string, fsize);
+    board->texture = makeTexture(renderer, string, fsize);
     free(string);
     string = NULL;
 
@@ -40,6 +40,24 @@ Board *makeBoard(Window *mainWindow) {
     board->selectedVisible = 0;
 
     return board;
+}
+
+void generateMoves(Board *board) {
+    for (unsigned char i = 0; i < board->p1->piecesRemaining; i++) {
+        generatePieceMoves(&board->p1->pieces[i], board->p1);
+    }
+
+    for (unsigned char i = 0; i < board->p2->piecesRemaining; i++) {
+        generatePieceMoves(&board->p2->pieces[i], board->p2);
+    }
+
+    for (unsigned char i = 0; i < board->p1->piecesRemaining; i++) {
+        calculateIfMovesAreValid(&board->p1->pieces[i], board->p1);
+    }
+
+    for (unsigned char i = 0; i < board->p2->piecesRemaining; i++) {
+        calculateIfMovesAreValid(&board->p2->pieces[i], board->p2);
+    }
 }
 
 void cleanUpBoard(Board *board) {

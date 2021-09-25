@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _BOARD_H_
-#define _BOARD_H_
+#ifndef INCLUDE_BOARD
+#define INCLUDE_BOARD
 
 #include <stdbool.h>
 
@@ -21,31 +21,32 @@
 typedef struct SDL_Rect SDL_Rect;
 typedef struct SDL_Texture SDL_Texture;
 typedef struct SDL_Point SDL_Point;
+typedef struct SDL_Renderer SDL_Renderer;
 
 typedef struct Piece Piece;
-typedef struct Board Board;
-typedef struct Window Window;
 typedef struct Player Player;
 
 struct Player {
     Piece *pieces;
-    int count;
+    unsigned char piecesRemaining;
     Player *opposition;
 };
 
-struct Board {
+typedef struct Board {
     Player *p1;
     Player *p2;
-    char moveCount;
+    unsigned char moveCount;
     char toMove;
     SDL_Texture *texture;
     SDL_Rect *rect;
     SDL_Rect *selectedRect;
     bool selectedVisible;
-};
+} Board;
 
-Board *makeBoard(Window *);
+Board *makeBoard(SDL_Renderer *);
+
+void generateMoves(Board *);
 
 void cleanUpBoard(Board *);
 
-#endif
+#endif /* INCLUDE_BOARD */

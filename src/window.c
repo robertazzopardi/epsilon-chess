@@ -8,7 +8,7 @@
 
 #define SQUARE_COUNT 64
 #define TITLE "Chess"
-#define FRAME_DELAY 1000 / 60
+#define FRAME_DELAY 1000.0f / 60.0f
 #define WHITE_TO_MOVE "White to move!"
 #define BLACK_TO_MOVE "Black to move!"
 
@@ -25,7 +25,6 @@ static void handleEvents(MouseEvent *event, Window *window,
         case SDL_MOUSEBUTTONUP:
             if (event->LMBDown && sdlEvent->button.button == SDL_BUTTON_LEFT) {
 
-                // if (event->pieceSelected) {
                 if (event->piece) {
 
                     if (canMovePiece(event) &&
@@ -48,14 +47,14 @@ static void handleEvents(MouseEvent *event, Window *window,
 
                         event->piece = NULL;
 
-                        // printPieces(window->board);
+                        generateMoves(window->board);
+
                     } else {
                         event->piece->rect->x = event->oldPos->x;
                         event->piece->rect->y = event->oldPos->y;
                     }
                 }
                 event->LMBDown = false;
-                // event->pieceSelected = false;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
@@ -66,11 +65,7 @@ static void handleEvents(MouseEvent *event, Window *window,
                 checkIfPiece(event, window->board->p1);
                 checkIfPiece(event, window->board->p2);
 
-                if (event->piece)
-                    generateMoves(event, window->board);
-
                 // Save old position
-                // if (event->pieceSelected) {
                 if (event->piece) {
                     event->oldPos->x = event->piece->rect->x;
                     event->oldPos->y = event->piece->rect->y;
@@ -94,7 +89,6 @@ static void handleEvents(MouseEvent *event, Window *window,
             event->mousePos->x = sdlEvent->motion.x;
             event->mousePos->y = sdlEvent->motion.y;
 
-            // if (event->LMBDown && event->pieceSelected) {
             if (event->LMBDown && event->piece) {
                 window->board->selectedVisible = false;
                 event->piece->rect->x = event->mousePos->x - event->offset->x;
@@ -111,13 +105,14 @@ static void gameLoop(Window *window) {
     event.mousePos = malloc(1 * sizeof(*event.mousePos));
     event.offset = malloc(1 * sizeof(*event.offset));
     event.oldPos = malloc(1 * sizeof(*event.oldPos));
-    // event.event = malloc(1 * sizeof(*event.event));
 
     SDL_Event sdlEvent;
 
     const int cellRadius = (WIDTH / ROW_COUNT) / 2;
 
     SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
+
+    generateMoves(window->board);
 
     // Main loop
     while (window->running) {
@@ -163,16 +158,13 @@ static void gameLoop(Window *window) {
         SDL_Delay(FRAME_DELAY);
     }
 
-    // free(event.piece);
     free(event.mousePos);
     free(event.offset);
     free(event.oldPos);
-    // free(event.event);
 
     event.mousePos = NULL;
     event.offset = NULL;
     event.oldPos = NULL;
-    // event.event = NULL;
 }
 
 void initialise() {
@@ -188,8 +180,9 @@ void initialise() {
                                 SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0),
         .running = true,
     };
-    window.rend = SDL_CreateRenderer(window.win, -1, SDL_RENDERER_ACCELERATED);
-    window.board = makeBoard(&window);
+    window.rend = SDL_CreateRenderer(
+        window.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    window.board = makeBoard(window.rend);
 
     makePieces(&window);
 

@@ -20,23 +20,18 @@
 typedef struct SDL_Rect SDL_Rect;
 typedef struct SDL_Texture SDL_Texture;
 typedef struct SDL_Point SDL_Point;
+
 typedef struct Piece Piece;
 typedef struct Player Player;
 typedef struct Board Board;
 typedef struct Window Window;
 typedef struct MouseEvent MouseEvent;
+typedef struct MoveConditions MoveConditions;
 
-typedef struct {
+typedef struct Moves {
     SDL_Point *squares;
-    int count;
+    unsigned char count;
 } Moves;
-
-typedef struct {
-    SDL_Point *p2;
-    Player *player;
-    Player *opposition;
-    Piece *piece;
-} MoveConditions;
 
 typedef enum {
     pawn = 'P',
@@ -56,13 +51,15 @@ typedef struct Piece {
     char player;
     Moves *(*canMove)(MoveConditions *);
     Moves *moves;
-    int maxMoves;
-    int *directionsX;
-    int *directionsY;
-    int directions;
+    unsigned char maxPossibleMoves;
+    char *directionsX;
+    char *directionsY;
+    char directions;
 } Piece;
 
-void generateMoves(MouseEvent *, Board *);
+void calculateIfMovesAreValid(Piece *, Player *);
+
+void generatePieceMoves(Piece *, Player *);
 
 bool canMovePiece(const MouseEvent *);
 

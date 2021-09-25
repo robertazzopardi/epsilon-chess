@@ -1,3 +1,3 @@
 # epsilon-chess
 
-<div>Icons made by <a href="https://www.flaticon.com/authors/good-ware" title="Good Ware">Good Ware</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+Icons made by [Good Ware]("https://www.flaticon.com/authors/good-ware") from [www.flaticon.com]("https://www.flaticon.com/")
