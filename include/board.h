@@ -1,19 +1,9 @@
-/**
- * @file board.h
- * @author Robert Azzopardi-Yashi (robertazzopardi@icloud.com)
- * @brief
- * @version 0.1
- * @date 2021-06-21
- *
- * @copyright Copyright (c) 2021
- *
- */
-
-#ifndef INCLUDE_BOARD
-#define INCLUDE_BOARD
+#ifndef BOARD_H
+#define BOARD_H
 
 #include <stdbool.h>
 
+#define SQUARE_SIZE 100
 #define WIDTH 800
 #define HEIGHT 800
 #define ROW_COUNT 8
@@ -49,4 +39,4 @@ void generateMoves(Board *);
 
 void cleanUpBoard(Board *);
 
-#endif /* INCLUDE_BOARD */
+#endif /* BOARD_H */

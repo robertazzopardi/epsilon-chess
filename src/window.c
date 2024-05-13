@@ -1,10 +1,11 @@
-#include "window.h"
-#include "board.h"
-#include "piece.h"
 #include <SDL.h>
 #include <SDL2_gfxPrimitives.h>
 #include <SDL_events.h>
 #include <SDL_image.h>
+
+#include "board.h"
+#include "piece.h"
+#include "window.h"
 
 #define SQUARE_COUNT 64
 #define TITLE "Chess"
@@ -80,9 +81,9 @@ static void handleEvents(MouseEvent *event, Window *window,
                 }
 
                 window->board->selectedRect->x =
-                    (event->mousePos->x / 100) * 100;
+                    (event->mousePos->x / SQUARE_SIZE) * SQUARE_SIZE;
                 window->board->selectedRect->y =
-                    (event->mousePos->y / 100) * 100;
+                    (event->mousePos->y / SQUARE_SIZE) * SQUARE_SIZE;
             }
             break;
         case SDL_MOUSEMOTION: {
@@ -129,17 +130,21 @@ static void gameLoop(Window *window) {
 
         // Render selected square
         if (window->board->selectedVisible) {
-            SDL_SetRenderDrawColor(window->rend, 100, 100, 100, 100);
+            SDL_SetRenderDrawColor(window->rend, SQUARE_SIZE, SQUARE_SIZE,
+                                   SQUARE_SIZE, SQUARE_SIZE);
             SDL_RenderFillRect(window->rend, window->board->selectedRect);
         }
 
         // Render possible moves for selected piece
         if (event.piece && event.piece->moves->count > 0) {
             for (int i = 0; i < event.piece->moves->count; i++) {
-                int mX = (event.piece->moves->squares[i].x * 100) + cellRadius;
-                int mY = (event.piece->moves->squares[i].y * 100) + cellRadius;
+                int mX = (event.piece->moves->squares[i].x * SQUARE_SIZE) +
+                         cellRadius;
+                int mY = (event.piece->moves->squares[i].y * SQUARE_SIZE) +
+                         cellRadius;
 
-                filledCircleRGBA(window->rend, mX, mY, 30, 100, 100, 100, 100);
+                filledCircleRGBA(window->rend, mX, mY, 30, SQUARE_SIZE,
+                                 SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
             }
         }
 
@@ -159,18 +164,17 @@ static void gameLoop(Window *window) {
     }
 
     free(event.mousePos);
-    free(event.offset);
-    free(event.oldPos);
-
     event.mousePos = NULL;
+    free(event.offset);
     event.offset = NULL;
+    free(event.oldPos);
     event.oldPos = NULL;
 }
 
 void initialise() {
-    // Init SDL
-    if (SDL_Init(SDL_INIT_VIDEO))
+    if (SDL_Init(SDL_INIT_VIDEO)) {
         exit(0);
+    }
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
@@ -194,10 +198,9 @@ void initialise() {
 
     // Destroy window and renderer
     SDL_DestroyRenderer(window.rend);
-    SDL_DestroyWindow(window.win);
-
-    window.win = NULL;
     window.rend = NULL;
+    SDL_DestroyWindow(window.win);
+    window.win = NULL;
 
     // Quit SDL
     IMG_Quit();

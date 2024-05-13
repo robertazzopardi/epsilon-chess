@@ -4,8 +4,7 @@
 #
 
 # define the C compiler to use
-# CC = gcc
-CC = clang
+CC = gcc
 
 # define any compile-time flags
 CFLAGS	:= -Wall -Wextra -Werror -W -std=c17 -ffast-math -Oz -D_THREAD_SAFE `sdl2-config --cflags`

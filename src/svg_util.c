@@ -1,6 +1,7 @@
-#include "svgutil.h"
-#include "board.h"
 #include <SDL_image.h>
+
+#include "board.h"
+#include "svg_util.h"
 
 #define BLACK "#000000"
 #define WHITE "#FFFFFF"
@@ -74,22 +75,21 @@ char *openFile(const char *inputFilename, long *fsize) {
 }
 
 SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
-
     SDL_RWops *rw = SDL_RWFromConstMem(string, fsize);
     SDL_Surface *surface = IMG_LoadSVG_RW(rw);
-
     return SDL_CreateTextureFromSurface(renderer, surface);
 }
 
 TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
-    long fsize;
+    long fsize = 0L;
     char *black = openFile(inputFilename, &fsize);
 
-    char *white;
-    if (strstr(black, BLACK) != NULL)
+    char *white = "\0";
+    if (strstr(black, BLACK) != NULL) {
         white = replace(black, BLACK, WHITE);
-    else
+    } else {
         white = malloc(fsize * sizeof(*white));
+    }
 
     TwoToneTexture *textures = malloc(1 * sizeof(*textures));
     textures->black = makeTexture(renderer, black, fsize);

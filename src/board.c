@@ -1,8 +1,9 @@
+#include <SDL_render.h>
+
 #include "board.h"
 #include "piece.h"
-#include "svgutil.h"
+#include "svg_util.h"
 #include "window.h"
-#include <SDL_render.h>
 
 #define CHESS_BOARD "./assets/864630-chess/svg/board/board.svg"
 
@@ -12,7 +13,7 @@ Board *makeBoard(SDL_Renderer *renderer) {
     board->toMove = PLAYER_2;
 
     // Set up the Boards texture
-    long fsize;
+    long fsize = 0L;
     char *string = openFile(CHESS_BOARD, &fsize);
     board->texture = makeTexture(renderer, string, fsize);
     free(string);
@@ -68,8 +69,8 @@ void cleanUpBoard(Board *board) {
     board->rect = NULL;
 
     free(board->p1);
-    free(board->p2);
     board->p1 = NULL;
+    free(board->p2);
     board->p2 = NULL;
 
     free(board->selectedRect);

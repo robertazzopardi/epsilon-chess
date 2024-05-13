@@ -1,16 +1,5 @@
-/**
- * @file piece.h
- * @author Robert Azzopardi-Yashi (robertazzopardi@icloud.com)
- * @brief
- * @version 0.1
- * @date 2021-06-21
- *
- * @copyright Copyright (c) 2021
- *
- */
-
-#ifndef _PIECE_H_
-#define _PIECE_H_
+#ifndef PIECE_H
+#define PIECE_H
 
 #include <stdbool.h>
 
@@ -75,4 +64,4 @@ void checkIfPiece(MouseEvent *, Player *);
 
 void alignPiece(MouseEvent *, Board *);
 
-#endif
+#endif /* PIECE_H */

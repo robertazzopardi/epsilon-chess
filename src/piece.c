@@ -1,11 +1,11 @@
-#include "piece.h"
-#include "board.h"
-#include "svgutil.h"
-#include "window.h"
 #include <SDL_rect.h>
 #include <SDL_render.h>
-#include <math.h>
 #include <stdlib.h>
+
+#include "board.h"
+#include "piece.h"
+#include "svg_util.h"
+#include "window.h"
 
 #define PAWN_IMG "./assets/864630-chess/svg/pieces/pawn.svg"
 #define ROOK_IMG "./assets/864630-chess/svg/pieces/rook.svg"
@@ -55,8 +55,8 @@ static inline Player *getPlayer(char initial, Board *board) {
 
 static inline bool checkPointNexToRect(int x, int y, int j,
                                        const Player *player) {
-    return x == player->pieces[j].rect->x / 100 &&
-           y == player->pieces[j].rect->y / 100;
+    return x == player->pieces[j].rect->x / SQUARE_SIZE &&
+           y == player->pieces[j].rect->y / SQUARE_SIZE;
 }
 
 static inline bool pointEqualsPoint(SDL_Point p1, SDL_Point p2) {
@@ -118,9 +118,8 @@ static Moves *canMoveQueenRookBishop(MoveConditions *mc) {
 
 static bool canCastle(MoveConditions *mc, Moves *moves) {
     int y = mc->pieceLocation->y;
-    int x;
     for (int i = 1; i < ROW_COUNT - mc->pieceLocation->x; i++) {
-        x = mc->pieceLocation->x + i;
+        int x = mc->pieceLocation->x + i;
         Initial initial = checkWhichPiece(x, y, mc->player);
         if (initial != rook && initial != empty) {
             break;
@@ -130,7 +129,7 @@ static bool canCastle(MoveConditions *mc, Moves *moves) {
     }
 
     for (int i = 1; i <= mc->pieceLocation->x; i++) {
-        x = mc->pieceLocation->x - i;
+        int x = mc->pieceLocation->x - i;
         Initial initial = checkWhichPiece(x, y, mc->player);
         if (initial != rook && initial != empty) {
             break;
@@ -196,8 +195,9 @@ void calculateIfMovesAreValid(Piece *piece __unused, Player *player) {
     SDL_Point playerKingLocation;
     for (unsigned char i = 0; i < player->piecesRemaining; i++) {
         if (player->pieces[i].initial == king) {
-            playerKingLocation = (SDL_Point){player->pieces[i].rect->x / 100,
-                                             player->pieces[i].rect->y / 100};
+            playerKingLocation =
+                (SDL_Point){player->pieces[i].rect->x / SQUARE_SIZE,
+                            player->pieces[i].rect->y / SQUARE_SIZE};
             break;
         }
     }
@@ -206,8 +206,9 @@ void calculateIfMovesAreValid(Piece *piece __unused, Player *player) {
     for (unsigned char i = 0; i < opposition->piecesRemaining; i++) {
         Piece offensivePiece = opposition->pieces[i];
 
-        SDL_Point offensivePieceLocation = {offensivePiece.rect->x / 100,
-                                            offensivePiece.rect->y / 100};
+        SDL_Point offensivePieceLocation = {
+            offensivePiece.rect->x / SQUARE_SIZE,
+            offensivePiece.rect->y / SQUARE_SIZE};
 
         unsigned char start = 0, end = 0;
         SDL_Point *routeToCheck = NULL;
@@ -281,7 +282,8 @@ void calculateIfMovesAreValid(Piece *piece __unused, Player *player) {
 }
 
 void generatePieceMoves(Piece *piece, Player *player) {
-    SDL_Point pieceLocation = {piece->rect->x / 100, piece->rect->y / 100};
+    SDL_Point pieceLocation = {piece->rect->x / SQUARE_SIZE,
+                               piece->rect->y / SQUARE_SIZE};
 
     resetMoves(piece->moves);
 
@@ -296,8 +298,8 @@ void generatePieceMoves(Piece *piece, Player *player) {
 void alignPiece(MouseEvent *event, Board *board) {
     SDL_Point point = {event->mousePos->x, event->mousePos->y};
 
-    int x = (point.x / 100) * 100;
-    int y = (point.y / 100) * 100;
+    int x = (point.x / SQUARE_SIZE) * SQUARE_SIZE;
+    int y = (point.y / SQUARE_SIZE) * SQUARE_SIZE;
 
     event->piece->rect->x = x;
     event->piece->rect->y = y;
@@ -305,17 +307,19 @@ void alignPiece(MouseEvent *event, Board *board) {
     Player *player = getPlayer(event->piece->player, board);
 
     // Castling
-    bool direction = ROW_COUNT - (x / 100) < (x / 100) ? true : false;
+    bool direction =
+        ROW_COUNT - (x / SQUARE_SIZE) < (x / SQUARE_SIZE) ? true : false;
     if (event->piece->initial == king && event->piece->firstMove) {
-        int m = -2, v = 100;
+        int m = -2, v = SQUARE_SIZE;
         if (direction) {
             m = 1;
-            v = -100;
+            v = -SQUARE_SIZE;
         }
 
         for (int i = 0; i < player->piecesRemaining; i++) {
-            if ((x / 100) + m == player->pieces[i].rect->x / 100 &&
-                (y / 100) == player->pieces[i].rect->y / 100) {
+            if ((x / SQUARE_SIZE) + m ==
+                    player->pieces[i].rect->x / SQUARE_SIZE &&
+                (y / SQUARE_SIZE) == player->pieces[i].rect->y / SQUARE_SIZE) {
                 player->pieces[i].rect->x = x + v;
             }
         }
@@ -342,8 +346,8 @@ void alignPiece(MouseEvent *event, Board *board) {
 }
 
 bool canMovePiece(const MouseEvent *event) {
-    const int mPosX = event->mousePos->x / 100;
-    const int mPosY = event->mousePos->y / 100;
+    const int mPosX = event->mousePos->x / SQUARE_SIZE;
+    const int mPosY = event->mousePos->y / SQUARE_SIZE;
 
     for (int i = 0; i < event->piece->moves->count; i++) {
         if (mPosX == event->piece->moves->squares[i].x &&
@@ -366,16 +370,6 @@ void checkIfPiece(MouseEvent *event, Player *player) {
         }
     }
 }
-
-// void printPieces(Board *board) {
-//     printf("\n");
-//     for (int i = 0; i < ROW_COUNT; i++) {
-//         for (int j = 0; j < ROW_COUNT; j++)
-//             printf("%c ", board->pieces[i][j].initial);
-//         printf("\n");
-//     }
-//     printf("\n");
-// }
 
 static Piece makePiece(char initial, SDL_Texture *texture, SDL_Point *pos,
                        char player, unsigned char maxPossibleMoves,
@@ -431,11 +425,11 @@ void makePieces(Window *mainWindow) {
 
     // Init the pieces
     for (int i = 0; i < ROW_COUNT; i++) {
-        p1BackRow.x = i * 100;
-        p1BackRow.y = HEIGHT - 800;
+        p1BackRow.x = i * SQUARE_SIZE;
+        p1BackRow.y = 0;
 
         p2BackRow.x = p1BackRow.x;
-        p2BackRow.y = HEIGHT - 100;
+        p2BackRow.y = HEIGHT - SQUARE_SIZE;
 
         switch (i) {
         case 0:
@@ -500,17 +494,17 @@ void makePieces(Window *mainWindow) {
     // printPieces(mainWindow->board);
 
     free(pawnTexture);
-    free(rookTexture);
-    free(kingTexture);
-    free(knightTexture);
-    free(bishopTexture);
-    free(queenTexture);
     pawnTexture = NULL;
+    free(rookTexture);
     rookTexture = NULL;
-    knightTexture = NULL;
-    bishopTexture = NULL;
-    queenTexture = NULL;
+    free(kingTexture);
     kingTexture = NULL;
+    free(knightTexture);
+    knightTexture = NULL;
+    free(bishopTexture);
+    bishopTexture = NULL;
+    free(queenTexture);
+    queenTexture = NULL;
 }
 
 void drawPieces(Window *mainWindow, MouseEvent *event) {
@@ -553,7 +547,7 @@ void cleanUpPieces(Board *board) {
     cleanUpPlayer(board->p2);
 
     free(board->p1->pieces);
-    free(board->p2->pieces);
     board->p1->pieces = NULL;
+    free(board->p2->pieces);
     board->p2->pieces = NULL;
 }

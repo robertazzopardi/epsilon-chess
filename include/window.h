@@ -1,16 +1,5 @@
-/**
- * @file window.h
- * @author Robert Azzopardi-Yashi (robertazzopardi@icloud.com)
- * @brief
- * @version 0.1
- * @date 2021-06-21
- *
- * @copyright Copyright (c) 2021
- *
- */
-
-#ifndef _WINDOW_h_
-#define _WINDOW_h_
+#ifndef WINDOW_H
+#define WINDOW_H
 
 #include <stdbool.h>
 
@@ -39,4 +28,4 @@ typedef struct Window {
 
 void initialise();
 
-#endif
+#endif /* WINDOW_H */
