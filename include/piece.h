@@ -23,28 +23,9 @@ typedef struct Moves {
     unsigned char count;
 } Moves;
 
-typedef enum {
-    pawn = 'P',
-    king = 'K',
-    queen = 'Q',
-    bishop = 'B',
-    knight = 'N',
-    rook = 'R',
-    empty = '_'
-} Initial;
-
 typedef struct Piece {
-    Initial initial;
     SDL_Texture *texture;
     SDL_Rect *rect;
-    bool firstMove;
-    char player;
-    Moves *(*canMove)(MoveConditions *);
-    Moves *moves;
-    unsigned char maxPossibleMoves;
-    char *directionsX;
-    char *directionsY;
-    char directions;
 } Piece;
 
 typedef struct PieceTexture PieceTexture;
@@ -76,9 +57,7 @@ typedef struct State State;
 
 void draw_pieces(Window *, MouseEvent *, State *, PieceTextureMap *);
 
-void cleanUpPieces(Board *);
-
-void checkIfPiece(MouseEvent *, Player *);
+void check_if_piece(MouseEvent *, State *);
 
 void alignPiece(MouseEvent *, Board *);
 

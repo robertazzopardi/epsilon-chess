@@ -16,8 +16,8 @@
 #define PLAYER_TO_MOVE(toMove)                                                 \
     (toMove == PLAYER_2 ? WHITE_TO_MOVE : BLACK_TO_MOVE)
 
-static void handleEvents(MouseEvent *event, Window *window,
-                         SDL_Event *sdlEvent) {
+static void handle_events(MouseEvent *event, Window *window,
+                          SDL_Event *sdlEvent, State *game) {
     while (SDL_PollEvent(sdlEvent)) {
         switch (sdlEvent->type) {
         case SDL_QUIT:
@@ -28,8 +28,7 @@ static void handleEvents(MouseEvent *event, Window *window,
 
                 if (event->piece) {
 
-                    if (canMovePiece(event) &&
-                        window->board->toMove == event->piece->player) {
+                    if (canMovePiece(event)) {
 
                         window->board->toMove =
                             window->board->toMove == PLAYER_1 ? PLAYER_2
@@ -38,17 +37,13 @@ static void handleEvents(MouseEvent *event, Window *window,
                         SDL_SetWindowTitle(
                             window->win, PLAYER_TO_MOVE(window->board->toMove));
 
-                        window->board->moveCount++;
-
                         // Align the pieces
                         alignPiece(event, window->board);
 
-                        if (event->piece->firstMove)
-                            event->piece->firstMove = false;
-
                         event->piece = NULL;
 
-                        generateMoves(window->board);
+                        // generateMoves(window->board);
+                        generate_moves(game);
 
                     } else {
                         event->piece->rect->x = event->oldPos->x;
@@ -63,8 +58,7 @@ static void handleEvents(MouseEvent *event, Window *window,
                 event->LMBDown = true;
 
                 event->piece = NULL;
-                checkIfPiece(event, window->board->p1);
-                checkIfPiece(event, window->board->p2);
+                check_if_piece(event, game);
 
                 // Save old position
                 if (event->piece) {
@@ -75,9 +69,9 @@ static void handleEvents(MouseEvent *event, Window *window,
                 // Toggle the colour of a square on the window->board
                 SDL_Point point = {event->mousePos->x, event->mousePos->y};
                 if (SDL_PointInRect(&point, window->board->selectedRect) ||
-                    !window->board->selectedVisible) {
-                    window->board->selectedVisible =
-                        !window->board->selectedVisible;
+                    window->board->selected == EMPTY) {
+                    window->board->selected =
+                        get_square(event->mousePos->x, event->mousePos->y);
                 }
 
                 window->board->selectedRect->x =
@@ -91,11 +85,13 @@ static void handleEvents(MouseEvent *event, Window *window,
             event->mousePos->y = sdlEvent->motion.y;
 
             if (event->LMBDown && event->piece) {
-                window->board->selectedVisible = false;
+                window->board->selected = EMPTY;
                 event->piece->rect->x = event->mousePos->x - event->offset->x;
                 event->piece->rect->y = event->mousePos->y - event->offset->y;
             }
         } break;
+        default:
+            break;
         }
     }
 }
@@ -110,7 +106,7 @@ static void game_loop(Window *window, State *game,
 
     SDL_Event sdlEvent;
 
-    const int cellRadius = (WIDTH / ROW_COUNT) / 2;
+    // const int cellRadius = (WIDTH / ROW_COUNT) / 2;
 
     SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
@@ -118,7 +114,7 @@ static void game_loop(Window *window, State *game,
 
     // Main loop
     while (window->running) {
-        handleEvents(&event, window, &sdlEvent);
+        handle_events(&event, window, &sdlEvent, game);
 
         SDL_SetRenderDrawColor(window->rend, 0, 0, 0, 255);
 
@@ -130,24 +126,24 @@ static void game_loop(Window *window, State *game,
                        window->board->rect);
 
         // Render selected square
-        if (window->board->selectedVisible) {
+        if (window->board->selected != EMPTY) {
             SDL_SetRenderDrawColor(window->rend, SQUARE_SIZE, SQUARE_SIZE,
                                    SQUARE_SIZE, SQUARE_SIZE);
             SDL_RenderFillRect(window->rend, window->board->selectedRect);
         }
 
         // Render possible moves for selected piece
-        if (event.piece && event.piece->moves->count > 0) {
-            for (int i = 0; i < event.piece->moves->count; i++) {
-                int mX = (event.piece->moves->squares[i].x * SQUARE_SIZE) +
-                         cellRadius;
-                int mY = (event.piece->moves->squares[i].y * SQUARE_SIZE) +
-                         cellRadius;
-
-                filledCircleRGBA(window->rend, mX, mY, 30, SQUARE_SIZE,
-                                 SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
-            }
-        }
+        // if (event.piece && event.piece->moves->count > 0) {
+        //     for (int i = 0; i < event.piece->moves->count; i++) {
+        //         int mX = (event.piece->moves->squares[i].x * SQUARE_SIZE) +
+        //                  cellRadius;
+        //         int mY = (event.piece->moves->squares[i].y * SQUARE_SIZE) +
+        //                  cellRadius;
+        //
+        //         filledCircleRGBA(window->rend, mX, mY, 30, SQUARE_SIZE,
+        //                          SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        //     }
+        // }
 
         // Render the pieces
         draw_pieces(window, &event, game, texture_map);
