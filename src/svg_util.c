@@ -80,7 +80,7 @@ SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
     return SDL_CreateTextureFromSurface(renderer, surface);
 }
 
-TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
+PieceTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
     long fsize = 0L;
     char *black = openFile(inputFilename, &fsize);
 
@@ -91,7 +91,7 @@ TwoToneTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
         white = malloc(fsize * sizeof(*white));
     }
 
-    TwoToneTexture *textures = malloc(1 * sizeof(*textures));
+    PieceTexture *textures = malloc(1 * sizeof(*textures));
     textures->black = makeTexture(renderer, black, fsize);
     textures->white = makeTexture(renderer, white, fsize);
 

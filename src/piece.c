@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "board.h"
+#include "engine.h"
 #include "piece.h"
 #include "svg_util.h"
 #include "window.h"
@@ -403,21 +404,72 @@ static Piece makePiece(char initial, SDL_Texture *texture, SDL_Point *pos,
     };
 }
 
-void makePieces(Window *mainWindow) {
-    TwoToneTexture *pawnTexture = getTexture(mainWindow->rend, PAWN_IMG);
-    TwoToneTexture *rookTexture = getTexture(mainWindow->rend, ROOK_IMG);
-    TwoToneTexture *knightTexture = getTexture(mainWindow->rend, KNIGHT_IMG);
-    TwoToneTexture *bishopTexture = getTexture(mainWindow->rend, BISHOP_IMG);
-    TwoToneTexture *queenTexture = getTexture(mainWindow->rend, QUEEN_IMG);
-    TwoToneTexture *kingTexture = getTexture(mainWindow->rend, KING_IMG);
+PieceTextureMap new_texture_map(SDL_Renderer *renderer) {
+    PieceTexture *pawn = getTexture(renderer, PAWN_IMG);
+    PieceTexture *rook = getTexture(renderer, ROOK_IMG);
+    PieceTexture *knight = getTexture(renderer, KNIGHT_IMG);
+    PieceTexture *bishop = getTexture(renderer, BISHOP_IMG);
+    PieceTexture *queen = getTexture(renderer, QUEEN_IMG);
+    PieceTexture *king = getTexture(renderer, KING_IMG);
 
-    mainWindow->board->p1->piecesRemaining = PIECE_COUNT;
-    mainWindow->board->p2->piecesRemaining = PIECE_COUNT;
+    return (PieceTextureMap){pawn, rook, knight, bishop, queen, king};
+}
 
-    mainWindow->board->p1->pieces =
-        malloc(PIECE_COUNT * sizeof(*mainWindow->board->p1->pieces));
-    mainWindow->board->p2->pieces =
-        malloc(PIECE_COUNT * sizeof(*mainWindow->board->p2->pieces));
+void clean_up_texture_map(PieceTextureMap *map) {
+    free(map->pawn->white);
+    map->pawn->white = NULL;
+    free(map->pawn->black);
+    map->pawn->black = NULL;
+    free(map->rook->white);
+    map->rook->white = NULL;
+    free(map->rook->black);
+    map->rook->black = NULL;
+    free(map->knight->white);
+    map->knight->white = NULL;
+    free(map->knight->black);
+    map->knight->black = NULL;
+    free(map->bishop->white);
+    map->bishop->white = NULL;
+    free(map->bishop->black);
+    map->bishop->black = NULL;
+    free(map->queen->white);
+    map->queen->white = NULL;
+    free(map->queen->black);
+    map->queen->black = NULL;
+    free(map->king->white);
+    map->king->white = NULL;
+    free(map->king->black);
+    map->king->black = NULL;
+
+    free(map->pawn);
+    map->pawn = NULL;
+    free(map->rook);
+    map->rook = NULL;
+    free(map->king);
+    map->king = NULL;
+    free(map->knight);
+    map->knight = NULL;
+    free(map->bishop);
+    map->bishop = NULL;
+    free(map->queen);
+    map->queen = NULL;
+}
+
+void makePieces(Window *window) {
+    PieceTexture *pawnTexture = getTexture(window->rend, PAWN_IMG);
+    PieceTexture *rookTexture = getTexture(window->rend, ROOK_IMG);
+    PieceTexture *knightTexture = getTexture(window->rend, KNIGHT_IMG);
+    PieceTexture *bishopTexture = getTexture(window->rend, BISHOP_IMG);
+    PieceTexture *queenTexture = getTexture(window->rend, QUEEN_IMG);
+    PieceTexture *kingTexture = getTexture(window->rend, KING_IMG);
+
+    window->board->p1->piecesRemaining = PIECE_COUNT;
+    window->board->p2->piecesRemaining = PIECE_COUNT;
+
+    window->board->p1->pieces =
+        malloc(PIECE_COUNT * sizeof(*window->board->p1->pieces));
+    window->board->p2->pieces =
+        malloc(PIECE_COUNT * sizeof(*window->board->p2->pieces));
 
     SDL_Point p1BackRow, p2BackRow;
 
@@ -479,19 +531,19 @@ void makePieces(Window *mainWindow) {
             break;
         }
 
-        mainWindow->board->p1->pieces[i] = player1;
-        mainWindow->board->p2->pieces[i + ROW_COUNT] = player2;
+        window->board->p1->pieces[i] = player1;
+        window->board->p2->pieces[i + ROW_COUNT] = player2;
 
         // Make the pawns
-        mainWindow->board->p1->pieces[i + ROW_COUNT] = makePiece(
+        window->board->p1->pieces[i + ROW_COUNT] = makePiece(
             pawn, pawnTexture->black, &(SDL_Point){p1BackRow.x, HEIGHT - 700},
             PLAYER_1, PAWN_MAX, canMovePawn, pawnX, pawn1Y, 2);
-        mainWindow->board->p2->pieces[i] = makePiece(
+        window->board->p2->pieces[i] = makePiece(
             pawn, pawnTexture->white, &(SDL_Point){p2BackRow.x, HEIGHT - 200},
             PLAYER_2, PAWN_MAX, canMovePawn, pawnX, pawn2Y, 2);
     }
 
-    // printPieces(mainWindow->board);
+    // printPieces(window->board);
 
     free(pawnTexture);
     pawnTexture = NULL;
@@ -507,32 +559,81 @@ void makePieces(Window *mainWindow) {
     queenTexture = NULL;
 }
 
-void drawPieces(Window *mainWindow, MouseEvent *event) {
-    for (int i = 0; i < mainWindow->board->p1->piecesRemaining; i++) {
-        if (event->piece &&
-            SDL_RectEquals(event->piece->rect,
-                           mainWindow->board->p1->pieces[i].rect)) {
-            continue;
-        }
+static inline SDL_Rect get_piece_rect(int sq) {
+    int file = sq & 7;
+    int rank = sq >> 3;
 
-        SDL_RenderCopy(mainWindow->rend,
-                       mainWindow->board->p1->pieces[i].texture, NULL,
-                       mainWindow->board->p1->pieces[i].rect);
-    }
-    for (int i = 0; i < mainWindow->board->p2->piecesRemaining; i++) {
-        if (event->piece &&
-            SDL_RectEquals(event->piece->rect,
-                           mainWindow->board->p2->pieces[i].rect)) {
-            continue;
-        }
-
-        SDL_RenderCopy(mainWindow->rend,
-                       mainWindow->board->p2->pieces[i].texture, NULL,
-                       mainWindow->board->p2->pieces[i].rect);
-    }
+    return (SDL_Rect){file * SQUARE_SIZE, rank * SQUARE_SIZE, SQUARE_SIZE,
+                      SQUARE_SIZE};
 }
 
-static void cleanUpPlayer(Player *player) {
+void draw_pieces(Window *window, __unused MouseEvent *event, State *game,
+                 PieceTextureMap *map) {
+    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+        // Pawns
+        if (game->bit_boards[0] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->pawn->white, NULL, &rect);
+        } else if (game->bit_boards[6] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->pawn->black, NULL, &rect);
+        } else if (game->bit_boards[1] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->knight->white, NULL, &rect);
+        } else if (game->bit_boards[7] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->knight->black, NULL, &rect);
+        } else if (game->bit_boards[2] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->bishop->white, NULL, &rect);
+        } else if (game->bit_boards[8] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->bishop->black, NULL, &rect);
+        } else if (game->bit_boards[3] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->rook->white, NULL, &rect);
+        } else if (game->bit_boards[9] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->rook->black, NULL, &rect);
+        } else if (game->bit_boards[4] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->king->white, NULL, &rect);
+        } else if (game->bit_boards[10] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->king->black, NULL, &rect);
+        } else if (game->bit_boards[5] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->queen->white, NULL, &rect);
+        } else if (game->bit_boards[11] & (1ULL << sq)) {
+            SDL_Rect rect = get_piece_rect(sq);
+            SDL_RenderCopy(window->rend, map->queen->black, NULL, &rect);
+        }
+    }
+
+    // for (int i = 0; i < window->board->p1->piecesRemaining; i++) {
+    //     if (event->piece && SDL_RectEquals(event->piece->rect,
+    //                                        window->board->p1->pieces[i].rect))
+    //                                        {
+    //         continue;
+    //     }
+    //
+    // SDL_RenderCopy(window->rend, window->board->p1->pieces[i].texture, NULL,
+    //                window->board->p1->pieces[i].rect);
+    // }
+    // for (int i = 0; i < window->board->p2->piecesRemaining; i++) {
+    //     if (event->piece && SDL_RectEquals(event->piece->rect,
+    //                                        window->board->p2->pieces[i].rect))
+    //                                        {
+    //         continue;
+    //     }
+    //
+    //     SDL_RenderCopy(window->rend, window->board->p2->pieces[i].texture,
+    //     NULL,
+    //                    window->board->p2->pieces[i].rect);
+    // }
+}
+
+static void clean_up_player(Player *player) {
     for (int i = 0; i < player->piecesRemaining; i++) {
         SDL_DestroyTexture(player->pieces[i].texture);
         player->pieces[i].texture = NULL;
@@ -543,8 +644,8 @@ static void cleanUpPlayer(Player *player) {
 }
 
 void cleanUpPieces(Board *board) {
-    cleanUpPlayer(board->p1);
-    cleanUpPlayer(board->p2);
+    clean_up_player(board->p1);
+    clean_up_player(board->p2);
 
     free(board->p1->pieces);
     board->p1->pieces = NULL;

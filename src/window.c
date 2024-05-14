@@ -4,10 +4,10 @@
 #include <SDL_image.h>
 
 #include "board.h"
+#include "engine.h"
 #include "piece.h"
 #include "window.h"
 
-#define SQUARE_COUNT 64
 #define TITLE "Chess"
 #define FRAME_DELAY 1000.0f / 60.0f
 #define WHITE_TO_MOVE "White to move!"
@@ -100,7 +100,8 @@ static void handleEvents(MouseEvent *event, Window *window,
     }
 }
 
-static void gameLoop(Window *window) {
+static void game_loop(Window *window, State *game,
+                      PieceTextureMap *texture_map) {
 
     MouseEvent event = {0};
     event.mousePos = malloc(1 * sizeof(*event.mousePos));
@@ -113,7 +114,7 @@ static void gameLoop(Window *window) {
 
     SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
-    generateMoves(window->board);
+    // generateMoves(window->board);
 
     // Main loop
     while (window->running) {
@@ -149,7 +150,8 @@ static void gameLoop(Window *window) {
         }
 
         // Render the pieces
-        drawPieces(window, &event);
+        draw_pieces(window, &event, game, texture_map);
+
         // Render selected piece on top
         if (event.piece) {
             SDL_RenderCopy(window->rend, event.piece->texture, NULL,
@@ -171,6 +173,19 @@ static void gameLoop(Window *window) {
     event.oldPos = NULL;
 }
 
+static void cleanup(Window *window) {
+    // cleanUpPieces(window->board);
+    cleanUpBoard(window->board);
+
+    SDL_DestroyRenderer(window->rend);
+    window->rend = NULL;
+    SDL_DestroyWindow(window->win);
+    window->win = NULL;
+
+    IMG_Quit();
+    SDL_Quit();
+}
+
 void initialise() {
     if (SDL_Init(SDL_INIT_VIDEO)) {
         exit(0);
@@ -188,21 +203,14 @@ void initialise() {
         window.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     window.board = makeBoard(window.rend);
 
-    makePieces(&window);
+    // makePieces(&window);
 
-    gameLoop(&window);
+    State game = new_state();
 
-    // Clean up
-    cleanUpPieces(window.board);
-    cleanUpBoard(window.board);
+    PieceTextureMap texture_map = new_texture_map(window.rend);
 
-    // Destroy window and renderer
-    SDL_DestroyRenderer(window.rend);
-    window.rend = NULL;
-    SDL_DestroyWindow(window.win);
-    window.win = NULL;
+    game_loop(&window, &game, &texture_map);
 
-    // Quit SDL
-    IMG_Quit();
-    SDL_Quit();
+    clean_up_texture_map(&texture_map);
+    cleanup(&window);
 }

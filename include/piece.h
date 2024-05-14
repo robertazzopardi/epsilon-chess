@@ -9,6 +9,7 @@
 typedef struct SDL_Rect SDL_Rect;
 typedef struct SDL_Texture SDL_Texture;
 typedef struct SDL_Point SDL_Point;
+typedef struct SDL_Renderer SDL_Renderer;
 
 typedef struct Piece Piece;
 typedef struct Player Player;
@@ -46,6 +47,21 @@ typedef struct Piece {
     char directions;
 } Piece;
 
+typedef struct PieceTexture PieceTexture;
+
+typedef struct {
+    PieceTexture *pawn;
+    PieceTexture *rook;
+    PieceTexture *knight;
+    PieceTexture *bishop;
+    PieceTexture *queen;
+    PieceTexture *king;
+} PieceTextureMap;
+
+PieceTextureMap new_texture_map(SDL_Renderer *);
+
+void clean_up_texture_map(PieceTextureMap *);
+
 void calculateIfMovesAreValid(Piece *, Player *);
 
 void generatePieceMoves(Piece *, Player *);
@@ -56,7 +72,9 @@ bool canMovePiece(const MouseEvent *);
 
 void makePieces(Window *);
 
-void drawPieces(Window *, MouseEvent *);
+typedef struct State State;
+
+void draw_pieces(Window *, MouseEvent *, State *, PieceTextureMap *);
 
 void cleanUpPieces(Board *);
 

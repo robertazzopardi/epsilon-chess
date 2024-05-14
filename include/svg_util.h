@@ -4,12 +4,12 @@
 typedef struct SDL_Texture SDL_Texture;
 typedef struct SDL_Renderer SDL_Renderer;
 
-typedef struct {
+typedef struct PieceTexture {
     SDL_Texture *black;
     SDL_Texture *white;
-} TwoToneTexture;
+} PieceTexture;
 
-TwoToneTexture *getTexture(SDL_Renderer *, const char *);
+PieceTexture *getTexture(SDL_Renderer *, const char *);
 
 SDL_Texture *makeTexture(SDL_Renderer *, char *, long);
 
