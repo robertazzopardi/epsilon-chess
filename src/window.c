@@ -2,6 +2,7 @@
 #include <SDL2_gfxPrimitives.h>
 #include <SDL_events.h>
 #include <SDL_image.h>
+#include <stdbool.h>
 
 #include "board.h"
 #include "engine.h"
@@ -16,19 +17,24 @@
 #define PLAYER_TO_MOVE(toMove)                                                 \
     (toMove == PLAYER_2 ? WHITE_TO_MOVE : BLACK_TO_MOVE)
 
-static void handle_events(MouseEvent *event, Window *window,
-                          SDL_Event *sdlEvent, State *game) {
-    while (SDL_PollEvent(sdlEvent)) {
-        switch (sdlEvent->type) {
+static void handle_events(SDL_Event *event, Window *window, State *game,
+                          Piece *piece) {
+    SDL_Point mouse_pos;
+    SDL_Point offset;
+    bool lmb_down = false;
+    SDL_Point old_pos;
+
+    while (SDL_PollEvent(event)) {
+        switch (event->type) {
         case SDL_QUIT:
             window->running = false;
             break;
         case SDL_MOUSEBUTTONUP:
-            if (event->LMBDown && sdlEvent->button.button == SDL_BUTTON_LEFT) {
+            if (lmb_down && event->button.button == SDL_BUTTON_LEFT) {
 
-                if (event->piece) {
+                if (piece != NULL) {
 
-                    if (canMovePiece(event)) {
+                    if (canMovePiece()) {
 
                         window->board->toMove =
                             window->board->toMove == PLAYER_1 ? PLAYER_2
@@ -38,56 +44,56 @@ static void handle_events(MouseEvent *event, Window *window,
                             window->win, PLAYER_TO_MOVE(window->board->toMove));
 
                         // Align the pieces
-                        alignPiece(event, window->board);
+                        align_piece(window->board);
 
-                        event->piece = NULL;
+                        piece = NULL;
 
                         // generateMoves(window->board);
                         generate_moves(game);
 
                     } else {
-                        event->piece->rect->x = event->oldPos->x;
-                        event->piece->rect->y = event->oldPos->y;
+                        piece->rect->x = old_pos.x;
+                        piece->rect->y = old_pos.y;
                     }
                 }
-                event->LMBDown = false;
+                lmb_down = false;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            if (!event->LMBDown && sdlEvent->button.button == SDL_BUTTON_LEFT) {
-                event->LMBDown = true;
+            if (!lmb_down && event->button.button == SDL_BUTTON_LEFT) {
+                lmb_down = true;
 
-                event->piece = NULL;
-                check_if_piece(event, game);
+                piece = NULL;
+                check_if_piece(&mouse_pos, &offset, piece, game);
 
                 // Save old position
-                if (event->piece) {
-                    event->oldPos->x = event->piece->rect->x;
-                    event->oldPos->y = event->piece->rect->y;
+                if (piece) {
+                    old_pos.x = piece->rect->x;
+                    old_pos.y = piece->rect->y;
                 }
 
                 // Toggle the colour of a square on the window->board
-                SDL_Point point = {event->mousePos->x, event->mousePos->y};
+                SDL_Point point = {mouse_pos.x, mouse_pos.y};
                 if (SDL_PointInRect(&point, window->board->selectedRect) ||
                     window->board->selected == EMPTY) {
                     window->board->selected =
-                        get_square(event->mousePos->x, event->mousePos->y);
+                        get_square(mouse_pos.x, mouse_pos.y);
                 }
 
                 window->board->selectedRect->x =
-                    (event->mousePos->x / SQUARE_SIZE) * SQUARE_SIZE;
+                    (mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
                 window->board->selectedRect->y =
-                    (event->mousePos->y / SQUARE_SIZE) * SQUARE_SIZE;
+                    (mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
             }
             break;
         case SDL_MOUSEMOTION: {
-            event->mousePos->x = sdlEvent->motion.x;
-            event->mousePos->y = sdlEvent->motion.y;
+            mouse_pos.x = event->motion.x;
+            mouse_pos.y = event->motion.y;
 
-            if (event->LMBDown && event->piece) {
+            if (lmb_down && piece) {
                 window->board->selected = EMPTY;
-                event->piece->rect->x = event->mousePos->x - event->offset->x;
-                event->piece->rect->y = event->mousePos->y - event->offset->y;
+                piece->rect->x = mouse_pos.x - offset.x;
+                piece->rect->y = mouse_pos.y - offset.y;
             }
         } break;
         default:
@@ -98,13 +104,7 @@ static void handle_events(MouseEvent *event, Window *window,
 
 static void game_loop(Window *window, State *game,
                       PieceTextureMap *texture_map) {
-
-    MouseEvent event = {0};
-    event.mousePos = malloc(1 * sizeof(*event.mousePos));
-    event.offset = malloc(1 * sizeof(*event.offset));
-    event.oldPos = malloc(1 * sizeof(*event.oldPos));
-
-    SDL_Event sdlEvent;
+    SDL_Event event;
 
     // const int cellRadius = (WIDTH / ROW_COUNT) / 2;
 
@@ -112,9 +112,11 @@ static void game_loop(Window *window, State *game,
 
     // generateMoves(window->board);
 
+    Piece *piece = NULL;
+
     // Main loop
     while (window->running) {
-        handle_events(&event, window, &sdlEvent, game);
+        handle_events(&event, window, game, piece);
 
         SDL_SetRenderDrawColor(window->rend, 0, 0, 0, 255);
 
@@ -146,12 +148,11 @@ static void game_loop(Window *window, State *game,
         // }
 
         // Render the pieces
-        draw_pieces(window, &event, game, texture_map);
+        draw_pieces(window, game, texture_map);
 
         // Render selected piece on top
-        if (event.piece) {
-            SDL_RenderCopy(window->rend, event.piece->texture, NULL,
-                           event.piece->rect);
+        if (piece != NULL) {
+            SDL_RenderCopy(window->rend, piece->texture, NULL, piece->rect);
         }
 
         // triggers the double buffers for multiple rendering
@@ -161,12 +162,10 @@ static void game_loop(Window *window, State *game,
         SDL_Delay(FRAME_DELAY);
     }
 
-    free(event.mousePos);
-    event.mousePos = NULL;
-    free(event.offset);
-    event.offset = NULL;
-    free(event.oldPos);
-    event.oldPos = NULL;
+    if (piece != NULL) {
+        free(piece);
+        piece = NULL;
+    }
 }
 
 static void cleanup(Window *window) {

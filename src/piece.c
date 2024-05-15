@@ -55,7 +55,7 @@ struct MoveConditions {
 //     return false;
 // }
 
-void alignPiece(__unused MouseEvent *event, __unused Board *board) {
+void align_piece(__unused Board *board) {
     // SDL_Point point = {event->mousePos->x, event->mousePos->y};
     //
     // int x = (point.x / SQUARE_SIZE) * SQUARE_SIZE;
@@ -105,7 +105,7 @@ void alignPiece(__unused MouseEvent *event, __unused Board *board) {
     // }
 }
 
-bool canMovePiece(__unused const MouseEvent *event) {
+bool canMovePiece() {
     // const int mPosX = event->mousePos->x / SQUARE_SIZE;
     // const int mPosY = event->mousePos->y / SQUARE_SIZE;
     //
@@ -124,29 +124,23 @@ static inline SDL_Rect get_piece_rect(int sq) {
                       SQUARE_SIZE, SQUARE_SIZE};
 }
 
-void check_if_piece(__unused MouseEvent *event, State *game) {
+void check_if_piece(SDL_Point *mouse_pos, __unused SDL_Point *offset,
+                    __unused Piece *piece, State *game) {
     for (int sq = 0; sq < BOARD_SIZE; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
-        if (SDL_PointInRect(event->mousePos, &rect) &&
+        if (SDL_PointInRect(mouse_pos, &rect) &&
             game->all_pieces & (1ULL << sq)) {
-            printf("Found piece\n");
+
+            // printf("Found piece\n");
+
+            // piece = &player->pieces[i];
+            // offset->x = mouse_pos->x - player->pieces[i].rect->x;
+            //
+            // offset->y = mouse_pos->y - player->pieces[i].rect->y;
+
             break;
         }
     }
-
-    // for (int i = 0; i < player->piecesRemaining; i++) {
-    //     if (SDL_PointInRect(event->mousePos, player->pieces[i].rect)) {
-    //
-    //         event->piece = &player->pieces[i];
-    //         event->offset->x = event->mousePos->x -
-    //         player->pieces[i].rect->x;
-    //
-    //         event->offset->y = event->mousePos->y
-    //         - player->pieces[i].rect->y;
-    //
-    //         break;
-    //     }
-    // }
 }
 
 // static Piece makePiece(char initial, SDL_Texture *texture, SDL_Point *pos,
@@ -323,8 +317,7 @@ void makePieces(__unused Window *window) {
     // }
 }
 
-void draw_pieces(Window *window, __unused MouseEvent *event, State *game,
-                 PieceTextureMap *map) {
+void draw_pieces(Window *window, State *game, PieceTextureMap *map) {
     for (int sq = 0; sq < BOARD_SIZE; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (game->bit_boards[0] & (1ULL << sq)) {
@@ -353,26 +346,4 @@ void draw_pieces(Window *window, __unused MouseEvent *event, State *game,
             SDL_RenderCopy(window->rend, map->queen->black, NULL, &rect);
         }
     }
-
-    // for (int i = 0; i < window->board->p1->piecesRemaining; i++) {
-    //     if (event->piece && SDL_RectEquals(event->piece->rect,
-    //                                        window->board->p1->pieces[i].rect))
-    //                                        {
-    //         continue;
-    //     }
-    //
-    // SDL_RenderCopy(window->rend, window->board->p1->pieces[i].texture, NULL,
-    //                window->board->p1->pieces[i].rect);
-    // }
-    // for (int i = 0; i < window->board->p2->piecesRemaining; i++) {
-    //     if (event->piece && SDL_RectEquals(event->piece->rect,
-    //                                        window->board->p2->pieces[i].rect))
-    //                                        {
-    //         continue;
-    //     }
-    //
-    //     SDL_RenderCopy(window->rend, window->board->p2->pieces[i].texture,
-    //     NULL,
-    //                    window->board->p2->pieces[i].rect);
-    // }
 }

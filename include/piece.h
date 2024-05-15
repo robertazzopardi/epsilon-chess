@@ -15,7 +15,6 @@ typedef struct Piece Piece;
 typedef struct Player Player;
 typedef struct Board Board;
 typedef struct Window Window;
-typedef struct MouseEvent MouseEvent;
 typedef struct MoveConditions MoveConditions;
 
 typedef struct Moves {
@@ -47,18 +46,16 @@ void calculateIfMovesAreValid(Piece *, Player *);
 
 void generatePieceMoves(Piece *, Player *);
 
-bool canMovePiece(const MouseEvent *);
-
-// void printPieces(Board *);
+bool canMovePiece();
 
 void makePieces(Window *);
 
 typedef struct State State;
 
-void draw_pieces(Window *, MouseEvent *, State *, PieceTextureMap *);
+void draw_pieces(Window *, State *, PieceTextureMap *);
 
-void check_if_piece(MouseEvent *, State *);
+void check_if_piece(SDL_Point *, SDL_Point *, Piece *, State *);
 
-void alignPiece(MouseEvent *, Board *);
+void align_piece(Board *);
 
 #endif /* PIECE_H */
