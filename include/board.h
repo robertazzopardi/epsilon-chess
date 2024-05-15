@@ -19,12 +19,11 @@ typedef struct Board {
     char toMove;
     SDL_Texture *texture;
     SDL_Rect *rect;
-    SDL_Rect *selectedRect;
     Square selected;
 } Board;
 
-Board *makeBoard(SDL_Renderer *);
+Board *make_board(SDL_Renderer *);
 
-void cleanUpBoard(Board *);
+void clean_up_board(Board *);
 
 #endif /* BOARD_H */

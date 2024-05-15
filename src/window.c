@@ -18,11 +18,11 @@
     (toMove == PLAYER_2 ? WHITE_TO_MOVE : BLACK_TO_MOVE)
 
 static void handle_events(SDL_Event *event, Window *window, State *game,
-                          Piece *piece) {
+                          Piece *piece, SDL_Rect *selected_square) {
     SDL_Point mouse_pos;
     SDL_Point offset;
-    bool lmb_down = false;
     SDL_Point old_pos;
+    bool lmb_down = false;
 
     while (SDL_PollEvent(event)) {
         switch (event->type) {
@@ -74,16 +74,14 @@ static void handle_events(SDL_Event *event, Window *window, State *game,
 
                 // Toggle the colour of a square on the window->board
                 SDL_Point point = {mouse_pos.x, mouse_pos.y};
-                if (SDL_PointInRect(&point, window->board->selectedRect) ||
+                if (SDL_PointInRect(&point, selected_square) ||
                     window->board->selected == EMPTY) {
                     window->board->selected =
                         get_square(mouse_pos.x, mouse_pos.y);
                 }
 
-                window->board->selectedRect->x =
-                    (mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
-                window->board->selectedRect->y =
-                    (mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
+                selected_square->x = (mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
+                selected_square->y = (mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
             }
             break;
         case SDL_MOUSEMOTION: {
@@ -114,16 +112,23 @@ static void game_loop(Window *window, State *game,
 
     Piece *piece = NULL;
 
-    // Main loop
+    SDL_Rect selected_square = {
+        .w = WIDTH / ROW_COUNT,
+        .h = WIDTH / ROW_COUNT,
+        .x = 0,
+        .y = 0,
+    };
+
+    Piece pieces[BOARD_SIZE];
+    make_pieces(pieces, texture_map, game);
+
     while (window->running) {
-        handle_events(&event, window, game, piece);
+        handle_events(&event, window, game, piece, &selected_square);
 
         SDL_SetRenderDrawColor(window->rend, 0, 0, 0, 255);
 
-        // Clear the screen
         SDL_RenderClear(window->rend);
 
-        // Render board
         SDL_RenderCopy(window->rend, window->board->texture, NULL,
                        window->board->rect);
 
@@ -131,15 +136,17 @@ static void game_loop(Window *window, State *game,
         if (window->board->selected != EMPTY) {
             SDL_SetRenderDrawColor(window->rend, SQUARE_SIZE, SQUARE_SIZE,
                                    SQUARE_SIZE, SQUARE_SIZE);
-            SDL_RenderFillRect(window->rend, window->board->selectedRect);
+            SDL_RenderFillRect(window->rend, &selected_square);
         }
 
         // Render possible moves for selected piece
         // if (event.piece && event.piece->moves->count > 0) {
         //     for (int i = 0; i < event.piece->moves->count; i++) {
-        //         int mX = (event.piece->moves->squares[i].x * SQUARE_SIZE) +
+        //         int mX = (event.piece->moves->squares[i].x * SQUARE_SIZE)
+        //         +
         //                  cellRadius;
-        //         int mY = (event.piece->moves->squares[i].y * SQUARE_SIZE) +
+        //         int mY = (event.piece->moves->squares[i].y * SQUARE_SIZE)
+        //         +
         //                  cellRadius;
         //
         //         filledCircleRGBA(window->rend, mX, mY, 30, SQUARE_SIZE,
@@ -148,7 +155,7 @@ static void game_loop(Window *window, State *game,
         // }
 
         // Render the pieces
-        draw_pieces(window, game, texture_map);
+        draw_pieces(window, game, texture_map, pieces);
 
         // Render selected piece on top
         if (piece != NULL) {
@@ -169,8 +176,7 @@ static void game_loop(Window *window, State *game,
 }
 
 static void cleanup(Window *window) {
-    // cleanUpPieces(window->board);
-    cleanUpBoard(window->board);
+    clean_up_board(window->board);
 
     SDL_DestroyRenderer(window->rend);
     window->rend = NULL;
@@ -196,9 +202,7 @@ void initialise() {
     };
     window.rend = SDL_CreateRenderer(
         window.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    window.board = makeBoard(window.rend);
-
-    // makePieces(&window);
+    window.board = make_board(window.rend);
 
     State game = new_state();
 

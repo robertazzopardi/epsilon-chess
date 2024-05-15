@@ -16,6 +16,7 @@ typedef struct Player Player;
 typedef struct Board Board;
 typedef struct Window Window;
 typedef struct MoveConditions MoveConditions;
+typedef struct State State;
 
 typedef struct Moves {
     SDL_Point *squares;
@@ -48,11 +49,11 @@ void generatePieceMoves(Piece *, Player *);
 
 bool canMovePiece();
 
-void makePieces(Window *);
+void make_pieces(Piece *, PieceTextureMap *, State *);
 
 typedef struct State State;
 
-void draw_pieces(Window *, State *, PieceTextureMap *);
+void draw_pieces(Window *, State *, PieceTextureMap *, Piece *);
 
 void check_if_piece(SDL_Point *, SDL_Point *, Piece *, State *);
 

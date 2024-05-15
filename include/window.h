@@ -3,12 +3,9 @@
 
 #include <stdbool.h>
 
-typedef struct SDL_Point SDL_Point;
 typedef struct SDL_Window SDL_Window;
 typedef struct SDL_Renderer SDL_Renderer;
-typedef union SDL_Event SDL_Event;
 
-typedef struct Piece Piece;
 typedef struct Board Board;
 
 typedef struct Window {

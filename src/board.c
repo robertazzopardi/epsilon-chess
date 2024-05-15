@@ -7,7 +7,7 @@
 
 #define CHESS_BOARD "./assets/864630-chess/svg/board/board.svg"
 
-Board *makeBoard(SDL_Renderer *renderer) {
+Board *make_board(SDL_Renderer *renderer) {
     Board *board = malloc(1 * sizeof(*board));
 
     board->toMove = PLAYER_2;
@@ -26,27 +26,17 @@ Board *makeBoard(SDL_Renderer *renderer) {
     board->rect->x = 0;
     board->rect->y = 0;
 
-    // Set up the selected rect
-    board->selectedRect = malloc(1 * sizeof(*board->selectedRect));
-    board->selectedRect->w = WIDTH / ROW_COUNT;
-    board->selectedRect->h = WIDTH / ROW_COUNT;
-    board->selectedRect->x = 0;
-    board->selectedRect->y = 0;
-
     board->selected = EMPTY;
 
     return board;
 }
 
-void cleanUpBoard(Board *board) {
+void clean_up_board(Board *board) {
     SDL_DestroyTexture(board->texture);
     board->texture = NULL;
 
     free(board->rect);
     board->rect = NULL;
-
-    free(board->selectedRect);
-    board->selectedRect = NULL;
 
     free(board);
     board = NULL;

@@ -143,38 +143,6 @@ void check_if_piece(SDL_Point *mouse_pos, __unused SDL_Point *offset,
     }
 }
 
-// static Piece makePiece(char initial, SDL_Texture *texture, SDL_Point *pos,
-//                        char player, unsigned char maxPossibleMoves,
-//                        void *canMoveFunc, char *directionsX, char
-//                        *directionsY, char directions) {
-//
-//     SDL_Rect *rect = malloc(1 * sizeof *rect);
-//
-//     rect->h = HEIGHT / ROW_COUNT;
-//     rect->w = WIDTH / ROW_COUNT;
-//
-//     rect->x = pos->x;
-//     rect->y = pos->y;
-//
-//     Moves *moves = malloc(1 * sizeof(*moves));
-//     moves->squares = malloc(maxPossibleMoves * sizeof(*moves->squares));
-//     moves->count = 0;
-//
-//     return (Piece){
-//         .initial = initial,
-//         .player = player,
-//         .texture = texture,
-//         .firstMove = true,
-//         .canMove = canMoveFunc,
-//         .rect = rect,
-//         .maxPossibleMoves = maxPossibleMoves,
-//         .directionsX = directionsX,
-//         .directionsY = directionsY,
-//         .directions = directions,
-//         .moves = moves,
-//     };
-// }
-
 PieceTextureMap new_texture_map(SDL_Renderer *renderer) {
     PieceTexture *pawn = getTexture(renderer, PAWN_IMG);
     PieceTexture *rook = getTexture(renderer, ROOK_IMG);
@@ -226,98 +194,39 @@ void clean_up_texture_map(PieceTextureMap *map) {
     map->queen = NULL;
 }
 
-void makePieces(__unused Window *window) {
-    // PieceTexture *pawnTexture = getTexture(window->rend, PAWN_IMG);
-    // PieceTexture *rookTexture = getTexture(window->rend, ROOK_IMG);
-    // PieceTexture *knightTexture = getTexture(window->rend, KNIGHT_IMG);
-    // PieceTexture *bishopTexture = getTexture(window->rend, BISHOP_IMG);
-    // PieceTexture *queenTexture = getTexture(window->rend, QUEEN_IMG);
-    // PieceTexture *kingTexture = getTexture(window->rend, KING_IMG);
-
-    // window->board->p1->piecesRemaining = PIECE_COUNT;
-    // window->board->p2->piecesRemaining = PIECE_COUNT;
-
-    // window->board->p1->pieces =
-    //     malloc(PIECE_COUNT * sizeof(*window->board->p1->pieces));
-    // window->board->p2->pieces =
-    //     malloc(PIECE_COUNT * sizeof(*window->board->p2->pieces));
-    //
-    // SDL_Point p1BackRow, p2BackRow;
-    //
-    // Piece player1, player2;
-    //
-    // // Init the pieces
-    // for (int i = 0; i < ROW_COUNT; i++) {
-    //     p1BackRow.x = i * SQUARE_SIZE;
-    //     p1BackRow.y = 0;
-    //
-    //     p2BackRow.x = p1BackRow.x;
-    //     p2BackRow.y = HEIGHT - SQUARE_SIZE;
-    //
-    //     switch (i) {
-    //     case 0:
-    //     case 7:
-    //         player1 =
-    //             makePiece(rook, rookTexture->black, &p1BackRow, PLAYER_1,
-    //                       ROOK_MAX, canMoveQueenRookBishop, rookX, rookY, 4);
-    //         player2 =
-    //             makePiece(rook, rookTexture->white, &p2BackRow, PLAYER_2,
-    //                       ROOK_MAX, canMoveQueenRookBishop, rookX, rookY, 4);
-    //         break;
-    //     case 1:
-    //     case 6:
-    //         player1 = makePiece(knight, knightTexture->black, &p1BackRow,
-    //                             PLAYER_1, KNIGHT_MAX, canMoveKingKnight,
-    //                             knightX, knightY, ROW_COUNT);
-    //         player2 = makePiece(knight, knightTexture->white, &p2BackRow,
-    //                             PLAYER_2, KNIGHT_MAX, canMoveKingKnight,
-    //                             knightX, knightY, ROW_COUNT);
-    //         break;
-    //     case 2:
-    //     case 5:
-    //         player1 = makePiece(bishop, bishopTexture->black, &p1BackRow,
-    //                             PLAYER_1, BISHOP_MAX, canMoveQueenRookBishop,
-    //                             bishopX, bishopY, 4);
-    //         player2 = makePiece(bishop, bishopTexture->white, &p2BackRow,
-    //                             PLAYER_2, BISHOP_MAX, canMoveQueenRookBishop,
-    //                             bishopX, bishopY, 4);
-    //         break;
-    //     case 3:
-    //         player1 = makePiece(queen, queenTexture->black, &p1BackRow,
-    //                             PLAYER_1, QUEEN_MAX, canMoveQueenRookBishop,
-    //                             queenX, queenY, ROW_COUNT);
-    //         player2 = makePiece(queen, queenTexture->white, &p2BackRow,
-    //                             PLAYER_2, QUEEN_MAX, canMoveQueenRookBishop,
-    //                             queenX, queenY, ROW_COUNT);
-    //         break;
-    //     case 4:
-    //         player1 = makePiece(king, kingTexture->black, &p1BackRow,
-    //         PLAYER_1,
-    //                             KNIGHT_MAX, canMoveKingKnight, kingX, kingY,
-    //                             ROW_COUNT);
-    //         player2 = makePiece(king, kingTexture->white, &p2BackRow,
-    //         PLAYER_2,
-    //                             KNIGHT_MAX, canMoveKingKnight, kingX, kingY,
-    //                             ROW_COUNT);
-    //         break;
-    //     default:
-    //         break;
-    //     }
-    //
-    //     window->board->p1->pieces[i] = player1;
-    //     window->board->p2->pieces[i + ROW_COUNT] = player2;
-    //
-    //     // Make the pawns
-    //     window->board->p1->pieces[i + ROW_COUNT] = makePiece(
-    //         pawn, pawnTexture->black, &(SDL_Point){p1BackRow.x, HEIGHT -
-    //         700}, PLAYER_1, PAWN_MAX, canMovePawn, pawnX, pawn1Y, 2);
-    //     window->board->p2->pieces[i] = makePiece(
-    //         pawn, pawnTexture->white, &(SDL_Point){p2BackRow.x, HEIGHT -
-    //         200}, PLAYER_2, PAWN_MAX, canMovePawn, pawnX, pawn2Y, 2);
-    // }
+void make_pieces(Piece *pieces, PieceTextureMap *map, State *game) {
+    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+        SDL_Rect rect = get_piece_rect(sq);
+        if (game->bit_boards[0] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->pawn->white, &rect};
+        } else if (game->bit_boards[6] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->pawn->black, &rect};
+        } else if (game->bit_boards[1] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->knight->white, &rect};
+        } else if (game->bit_boards[7] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->knight->black, &rect};
+        } else if (game->bit_boards[2] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->bishop->white, &rect};
+        } else if (game->bit_boards[8] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->bishop->black, &rect};
+        } else if (game->bit_boards[3] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->rook->white, &rect};
+        } else if (game->bit_boards[9] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->rook->black, &rect};
+        } else if (game->bit_boards[4] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->king->white, &rect};
+        } else if (game->bit_boards[10] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->king->black, &rect};
+        } else if (game->bit_boards[5] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->queen->white, &rect};
+        } else if (game->bit_boards[11] & (1ULL << sq)) {
+            pieces[sq] = (Piece){map->queen->black, &rect};
+        }
+    }
 }
 
-void draw_pieces(Window *window, State *game, PieceTextureMap *map) {
+void draw_pieces(Window *window, State *game, PieceTextureMap *map,
+                 __unused Piece *pieces) {
     for (int sq = 0; sq < BOARD_SIZE; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (game->bit_boards[0] & (1ULL << sq)) {
