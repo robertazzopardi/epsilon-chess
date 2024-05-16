@@ -26,12 +26,11 @@ typedef struct {
 
 static void handle_events(Window *window, State *game, Piece *piece,
                           SDL_Rect *selected_square, Piece *pieces,
-                          Event *event) {
-    // printf("%s\n", piece == NULL ? "true" : "false");
+                          Event *event, bool *running) {
     while (SDL_PollEvent(&event->event)) {
         switch (event->event.type) {
         case SDL_QUIT:
-            window->running = false;
+            *running = false;
             break;
         case SDL_MOUSEBUTTONUP:
             if (event->event.button.button == SDL_BUTTON_LEFT) {
@@ -75,15 +74,14 @@ static void handle_events(Window *window, State *game, Piece *piece,
                 }
 
             } else if (event->event.button.button == SDL_BUTTON_RIGHT) {
-                // Toggle the colour of a square on the window->board
-                if (window->board->selected == EMPTY) {
+                if (window->board->selected_square == EMPTY) {
                     if (SDL_PointInRect(&event->mouse_pos, selected_square) ||
-                        window->board->selected == EMPTY) {
-                        window->board->selected =
+                        window->board->selected_square == EMPTY) {
+                        window->board->selected_square =
                             get_square(event->mouse_pos.x, event->mouse_pos.y);
                     }
                 } else {
-                    window->board->selected = EMPTY;
+                    window->board->selected_square = EMPTY;
                 }
 
                 selected_square->x =
@@ -96,11 +94,10 @@ static void handle_events(Window *window, State *game, Piece *piece,
             event->mouse_pos.x = event->event.motion.x;
             event->mouse_pos.y = event->event.motion.y;
 
-            // printf("%s %s\n", piece != NULL ? "true" : "false",
-            //        event->lmb_down ? "true" : "false");
+            printf("%s\n", piece != NULL ? "true" : "false");
             if (event->event.button.button == SDL_BUTTON_LEFT && piece) {
                 // printf("here\n");
-                window->board->selected = EMPTY;
+                window->board->selected_square = EMPTY;
                 piece->rect.x = event->mouse_pos.x - event->offset.x;
                 piece->rect.y = event->mouse_pos.y - event->offset.y;
             }
@@ -131,8 +128,11 @@ static void game_loop(Window *window, State *game,
 
     Event event = {0};
 
-    while (window->running) {
-        handle_events(window, game, piece, &selected_square, pieces, &event);
+    bool running = true;
+
+    while (running) {
+        handle_events(window, game, piece, &selected_square, pieces, &event,
+                      &running);
 
         SDL_SetRenderDrawColor(window->rend, 0, 0, 0, 255);
 
@@ -141,8 +141,7 @@ static void game_loop(Window *window, State *game,
         SDL_RenderCopy(window->rend, window->board->texture, NULL,
                        window->board->rect);
 
-        // Render selected square
-        if (window->board->selected != EMPTY) {
+        if (window->board->selected_square != EMPTY) {
             SDL_SetRenderDrawColor(window->rend, SQUARE_SIZE, SQUARE_SIZE,
                                    SQUARE_SIZE, SQUARE_SIZE);
             SDL_RenderFillRect(window->rend, &selected_square);
@@ -207,7 +206,6 @@ void initialise() {
     Window window = {
         .win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,
                                 SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0),
-        .running = true,
     };
     window.rend = SDL_CreateRenderer(
         window.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);

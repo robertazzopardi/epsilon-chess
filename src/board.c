@@ -26,7 +26,7 @@ Board *make_board(SDL_Renderer *renderer) {
     board->rect->x = 0;
     board->rect->y = 0;
 
-    board->selected = EMPTY;
+    board->selected_square = EMPTY;
 
     return board;
 }
