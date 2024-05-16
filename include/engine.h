@@ -15,7 +15,7 @@ typedef struct {
 typedef uint64_t Bitboard;
 
 typedef struct State {
-    Bitboard bit_boards[NUM_PIECE_BIT_BOARDS];
+    Bitboard bit_boards[PIECE_TYPE_COUNT];
     Bitboard all_pieces;
     Move moves[MAX_MOVES];
 } State;

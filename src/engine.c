@@ -418,7 +418,7 @@ State new_state() {
     State game;
 
     game.all_pieces = EMPTY_BOARD;
-    for (size_t i = 0; i < NUM_PIECE_BIT_BOARDS; i++) {
+    for (size_t i = 0; i < PIECE_TYPE_COUNT; i++) {
         game.bit_boards[i] = EMPTY_BOARD | pieces[i];
         game.all_pieces |= game.bit_boards[i];
     }
@@ -432,7 +432,7 @@ State new_state() {
 //     State game;
 //
 //     game.all_pieces = EMPTY_BOARD;
-//     for (size_t i = 0; i < NUM_PIECE_BIT_BOARDS; i++) {
+//     for (size_t i = 0; i < PIECE_TYPE_COUNT; i++) {
 //         game.bit_boards[i] = EMPTY_BOARD | pieces[i];
 //         game.all_pieces |= game.bit_boards[i];
 //     }

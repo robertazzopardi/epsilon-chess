@@ -5,7 +5,7 @@
 #define BOARD_SIZE 64
 #define EMPTY_BOARD 0ULL
 
-#define NUM_PIECE_BIT_BOARDS 12
+#define PIECE_TYPE_COUNT 12
 
 #define MAX_MOVES 300
 
