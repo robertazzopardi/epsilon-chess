@@ -24,12 +24,6 @@
 #define QUEEN_MAX 27
 #define KING_MAX 10
 
-struct MoveConditions {
-    SDL_Point *pieceLocation;
-    Player *player;
-    Piece *piece;
-};
-
 // static bool canCastle(MoveConditions *mc, Moves *moves) {
 //     int y = mc->pieceLocation->y;
 //     for (int i = 1; i < ROW_COUNT - mc->pieceLocation->x; i++) {
@@ -124,28 +118,21 @@ static inline SDL_Rect get_piece_rect(int sq) {
                       SQUARE_SIZE, SQUARE_SIZE};
 }
 
-Piece *check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
-                      Piece pieces[]) {
+void check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
+                    Piece pieces[], Piece **piece) {
     for (int sq = 0; sq < BOARD_SIZE; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (SDL_PointInRect(mouse_pos, &rect) &&
             game->all_pieces & (1ULL << sq)) {
 
-            printf("Found piece\n");
-
-            // assign the piece to the pointer
-            // piece = &pieces[sq];
-
             offset->x = mouse_pos->x - rect.x;
-
             offset->y = mouse_pos->y - rect.y;
 
-            return &pieces[sq];
-            // break;
+            *piece = &pieces[sq];
+
+            break;
         }
     }
-
-    return NULL;
 }
 
 PieceTextureMap new_texture_map(SDL_Renderer *renderer) {

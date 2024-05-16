@@ -24,7 +24,7 @@ typedef struct {
     SDL_Event event;
 } Event;
 
-static void handle_events(Window *window, State *game, Piece *piece,
+static void handle_events(Window *window, State *game, Piece **piece,
                           SDL_Rect *selected_square, Piece *pieces,
                           Event *event, bool *running) {
     while (SDL_PollEvent(&event->event)) {
@@ -47,12 +47,11 @@ static void handle_events(Window *window, State *game, Piece *piece,
 
                         align_piece(window->board);
 
-                        // piece = NULL;
-
+                        *piece = NULL;
                         generate_moves(game);
                     } else {
-                        piece->rect.x = event->old_pos.x;
-                        piece->rect.y = event->old_pos.y;
+                        (*piece)->rect.x = event->old_pos.x;
+                        (*piece)->rect.y = event->old_pos.y;
                     }
                 }
             }
@@ -60,19 +59,14 @@ static void handle_events(Window *window, State *game, Piece *piece,
         case SDL_MOUSEBUTTONDOWN:
             if (event->event.button.button == SDL_BUTTON_LEFT) {
 
-                // piece = NULL;
-                Piece *tmp_piece = check_if_piece(&event->mouse_pos,
-                                                  &event->offset, game, pieces);
-                if (tmp_piece) {
-                    piece = tmp_piece;
-                }
+                *piece = NULL;
+                check_if_piece(&event->mouse_pos, &event->offset, game, pieces,
+                               &*piece);
 
-                // Save old position
-                if (piece) {
-                    event->old_pos.x = piece->rect.x;
-                    event->old_pos.y = piece->rect.y;
+                if (*piece) {
+                    event->old_pos.x = (*piece)->rect.x;
+                    event->old_pos.y = (*piece)->rect.y;
                 }
-
             } else if (event->event.button.button == SDL_BUTTON_RIGHT) {
                 if (window->board->selected_square == EMPTY) {
                     if (SDL_PointInRect(&event->mouse_pos, selected_square) ||
@@ -94,12 +88,10 @@ static void handle_events(Window *window, State *game, Piece *piece,
             event->mouse_pos.x = event->event.motion.x;
             event->mouse_pos.y = event->event.motion.y;
 
-            printf("%s\n", piece != NULL ? "true" : "false");
-            if (event->event.button.button == SDL_BUTTON_LEFT && piece) {
-                // printf("here\n");
+            if (event->event.button.button == SDL_BUTTON_LEFT && *piece) {
                 window->board->selected_square = EMPTY;
-                piece->rect.x = event->mouse_pos.x - event->offset.x;
-                piece->rect.y = event->mouse_pos.y - event->offset.y;
+                (*piece)->rect.x = event->mouse_pos.x - event->offset.x;
+                (*piece)->rect.y = event->mouse_pos.y - event->offset.y;
             }
         } break;
         default:
@@ -114,8 +106,6 @@ static void game_loop(Window *window, State *game,
 
     SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
-    Piece *piece = NULL;
-
     SDL_Rect selected_square = {
         .w = WIDTH / ROW_COUNT,
         .h = WIDTH / ROW_COUNT,
@@ -123,6 +113,7 @@ static void game_loop(Window *window, State *game,
         .y = 0,
     };
 
+    Piece *piece = NULL;
     Piece pieces[BOARD_SIZE];
     make_pieces(pieces, texture_map, game);
 
@@ -131,7 +122,7 @@ static void game_loop(Window *window, State *game,
     bool running = true;
 
     while (running) {
-        handle_events(window, game, piece, &selected_square, pieces, &event,
+        handle_events(window, game, &piece, &selected_square, pieces, &event,
                       &running);
 
         SDL_SetRenderDrawColor(window->rend, 0, 0, 0, 255);
@@ -175,11 +166,6 @@ static void game_loop(Window *window, State *game,
 
         // calculates to 60 fps
         SDL_Delay(FRAME_DELAY);
-    }
-
-    if (piece != NULL) {
-        free(piece);
-        piece = NULL;
     }
 }
 

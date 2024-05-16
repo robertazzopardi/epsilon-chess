@@ -4,8 +4,6 @@
 #include <SDL_rect.h>
 #include <stdbool.h>
 
-#include "consts.h"
-
 #define PLAYER_1 1
 #define PLAYER_2 2
 
@@ -17,7 +15,6 @@ typedef struct Piece Piece;
 typedef struct Player Player;
 typedef struct Board Board;
 typedef struct Window Window;
-typedef struct MoveConditions MoveConditions;
 typedef struct State State;
 
 typedef struct Piece {
@@ -52,7 +49,7 @@ typedef struct State State;
 
 void draw_pieces(Window *, State *, Piece *);
 
-Piece *check_if_piece(SDL_Point *, SDL_Point *, State *, Piece[]);
+void check_if_piece(SDL_Point *, SDL_Point *, State *, Piece[], Piece **);
 
 void align_piece(Board *);
 
