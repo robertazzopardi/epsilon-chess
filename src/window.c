@@ -9,13 +9,7 @@
 #include "piece.h"
 #include "window.h"
 
-#define TITLE "Chess"
 #define FRAME_DELAY 1000.0f / 60.0f
-#define WHITE_TO_MOVE "White to move!"
-#define BLACK_TO_MOVE "Black to move!"
-
-#define PLAYER_TO_MOVE(toMove)                                                 \
-    (toMove == PLAYER_2 ? WHITE_TO_MOVE : BLACK_TO_MOVE)
 
 typedef struct {
     SDL_Point mouse_pos;
@@ -37,15 +31,15 @@ static void handle_events(Window *window, State *game, Piece **piece,
 
                 if (piece != NULL) {
 
-                    if (canMovePiece()) {
-                        window->board->toMove =
-                            window->board->toMove == PLAYER_1 ? PLAYER_2
-                                                              : PLAYER_1;
+                    if (true) {
+                        // SDL_SetWindowTitle(
+                        //     window->win,
+                        //     PLAYER_TO_MOVE(window->board->toMove));
 
-                        SDL_SetWindowTitle(
-                            window->win, PLAYER_TO_MOVE(window->board->toMove));
-
-                        align_piece(window->board);
+                        (*piece)->rect.x =
+                            (event->mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
+                        (*piece)->rect.y =
+                            (event->mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
 
                         *piece = NULL;
                         generate_moves(game);
@@ -104,7 +98,7 @@ static void game_loop(Window *window, State *game,
                       PieceTextureMap *texture_map) {
     // const int cellRadius = (WIDTH / ROW_COUNT) / 2;
 
-    SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
+    // SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
     SDL_Rect selected_square = {
         .w = WIDTH / ROW_COUNT,
@@ -153,7 +147,6 @@ static void game_loop(Window *window, State *game,
         //     }
         // }
 
-        // Render the pieces
         draw_pieces(window, game, pieces);
 
         // Render selected piece on top
@@ -161,10 +154,8 @@ static void game_loop(Window *window, State *game,
             SDL_RenderCopy(window->rend, piece->texture, NULL, &piece->rect);
         }
 
-        // triggers the double buffers for multiple rendering
         SDL_RenderPresent(window->rend);
 
-        // calculates to 60 fps
         SDL_Delay(FRAME_DELAY);
     }
 }
@@ -190,7 +181,7 @@ void initialise() {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     Window window = {
-        .win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,
+        .win = SDL_CreateWindow("Chess", SDL_WINDOWPOS_CENTERED,
                                 SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0),
     };
     window.rend = SDL_CreateRenderer(

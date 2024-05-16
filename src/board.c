@@ -8,9 +8,7 @@
 #define CHESS_BOARD "./assets/864630-chess/svg/board/board.svg"
 
 Board *make_board(SDL_Renderer *renderer) {
-    Board *board = malloc(1 * sizeof(*board));
-
-    board->toMove = PLAYER_2;
+    Board *board = (Board *)malloc(sizeof(*board));
 
     // Set up the Boards texture
     long fsize = 0L;

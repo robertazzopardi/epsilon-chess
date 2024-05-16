@@ -17,13 +17,6 @@
 
 #define PIECE_COUNT 16
 
-#define ROOK_MAX 14
-#define BISHOP_MAX 13
-#define KNIGHT_MAX 8
-#define PAWN_MAX 3
-#define QUEEN_MAX 27
-#define KING_MAX 10
-
 // static bool canCastle(MoveConditions *mc, Moves *moves) {
 //     int y = mc->pieceLocation->y;
 //     for (int i = 1; i < ROW_COUNT - mc->pieceLocation->x; i++) {
@@ -48,69 +41,6 @@
 //
 //     return false;
 // }
-
-void align_piece(__unused Board *board) {
-    // SDL_Point point = {event->mousePos->x, event->mousePos->y};
-    //
-    // int x = (point.x / SQUARE_SIZE) * SQUARE_SIZE;
-    // int y = (point.y / SQUARE_SIZE) * SQUARE_SIZE;
-    //
-    // event->piece->rect->x = x;
-    // event->piece->rect->y = y;
-    //
-    // Player *player = getPlayer(event->piece->player, board);
-    //
-    // // Castling
-    // bool direction =
-    //     ROW_COUNT - (x / SQUARE_SIZE) < (x / SQUARE_SIZE) ? true : false;
-    // if (event->piece->initial == king && event->piece->firstMove) {
-    //     int m = -2, v = SQUARE_SIZE;
-    //     if (direction) {
-    //         m = 1;
-    //         v = -SQUARE_SIZE;
-    //     }
-    //
-    //     for (int i = 0; i < player->piecesRemaining; i++) {
-    //         if ((x / SQUARE_SIZE) + m ==
-    //                 player->pieces[i].rect->x / SQUARE_SIZE &&
-    //             (y / SQUARE_SIZE) == player->pieces[i].rect->y / SQUARE_SIZE)
-    //             { player->pieces[i].rect->x = x + v;
-    //         }
-    //     }
-    // }
-    //
-    // // Check if moved piece is on another piece
-    // for (int i = 0; i < player->opposition->piecesRemaining; i++) {
-    //     // Capture the oppositions piece
-    //     if (player->opposition->pieces[i].rect->x == x &&
-    //         player->opposition->pieces[i].rect->y == y &&
-    //         SDL_PointInRect(&point, player->opposition->pieces[i].rect)) {
-    //
-    //         free(player->opposition->pieces[i].rect);
-    //
-    //         for (int j = i; j < player->opposition->piecesRemaining - 1; j++)
-    //             player->opposition->pieces[j] =
-    //                 player->opposition->pieces[j + 1];
-    //
-    //         player->opposition->piecesRemaining--;
-    //
-    //         break;
-    //     }
-    // }
-}
-
-bool canMovePiece() {
-    // const int mPosX = event->mousePos->x / SQUARE_SIZE;
-    // const int mPosY = event->mousePos->y / SQUARE_SIZE;
-    //
-    // for (int i = 0; i < event->piece->moves->count; i++) {
-    //     if (mPosX == event->piece->moves->squares[i].x &&
-    //         mPosY == event->piece->moves->squares[i].y)
-    //         return true;
-    // }
-
-    return true;
-}
 
 static inline SDL_Rect get_piece_rect(int sq) {
     Location loc = get_location(sq);
