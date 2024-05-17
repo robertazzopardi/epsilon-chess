@@ -11,6 +11,8 @@
 
 #define FRAME_DELAY 1000.0f / 60.0f
 
+static const int cell_radius = (WIDTH / ROW_COUNT) / 2;
+
 typedef struct {
     SDL_Point mouse_pos;
     SDL_Point offset;
@@ -96,7 +98,6 @@ static void handle_events(Window *window, State *game, Piece **piece,
 
 static void game_loop(Window *window, State *game,
                       PieceTextureMap *texture_map) {
-    // const int cellRadius = (WIDTH / ROW_COUNT) / 2;
 
     // SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
@@ -133,19 +134,22 @@ static void game_loop(Window *window, State *game,
         }
 
         // Render possible moves for selected piece
-        // if (event.piece && event.piece->moves->count > 0) {
-        //     for (int i = 0; i < event.piece->moves->count; i++) {
-        //         int mX = (event.piece->moves->squares[i].x * SQUARE_SIZE)
-        //         +
-        //                  cellRadius;
-        //         int mY = (event.piece->moves->squares[i].y * SQUARE_SIZE)
-        //         +
-        //                  cellRadius;
-        //
-        //         filledCircleRGBA(window->rend, mX, mY, 30, SQUARE_SIZE,
-        //                          SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
-        //     }
-        // }
+        if (piece) {
+            for (int sq = 0; sq < MAX_MOVES; sq++) {
+                if (get_square(piece->rect.y / SQUARE_SIZE,
+                               piece->rect.x / SQUARE_SIZE) ==
+                    game->moves[sq].from) {
+                    Location loc = get_location(game->moves[sq].to);
+
+                    int x = (loc.rank * SQUARE_SIZE) + cell_radius;
+                    int y = (loc.file * SQUARE_SIZE) + cell_radius;
+
+                    printf("%d %d\n", x, y);
+                    filledCircleRGBA(window->rend, x, y, 30, SQUARE_SIZE,
+                                     SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                }
+            }
+        }
 
         draw_pieces(window, game, pieces);
 
@@ -189,6 +193,8 @@ void initialise() {
     window.board = make_board(window.rend);
 
     State game = new_state();
+
+    generate_moves(&game);
 
     PieceTextureMap texture_map = new_texture_map(window.rend);
 

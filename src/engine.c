@@ -121,7 +121,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
     Bitboard single_step_moves_white = (white_pawns << 8) & ~all_pieces;
     while (single_step_moves_white) {
         int to = __builtin_ctzll(single_step_moves_white);
-        moves[(*num_moves)++] = (Move){to - 8, to, NORMAL_MOVE, 0};
+        moves[(*num_moves)++] = (Move){to - 8, to, QUIET};
         single_step_moves_white &= single_step_moves_white - 1;
     }
 
@@ -130,7 +130,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
         ((single_step_moves_white & (1ULL << 16)) << 8) & ~all_pieces;
     while (double_step_moves_white) {
         int to = __builtin_ctzll(double_step_moves_white);
-        moves[(*num_moves)++] = (Move){to - 16, to, DOUBLE_PAWN_PUSH, 0};
+        moves[(*num_moves)++] = (Move){to - 16, to, QUIET};
         double_step_moves_white &= double_step_moves_white - 1;
     }
 
@@ -143,7 +143,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
         if (!(all_pieces & (1ULL << from))) {
             from = to - 7;
         }
-        moves[(*num_moves)++] = (Move){from, to, NORMAL_MOVE, 0};
+        moves[(*num_moves)++] = (Move){from, to, CAPTURE};
         captures_white &= captures_white - 1;
     }
 
@@ -151,7 +151,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
     Bitboard single_step_moves_black = (black_pawns >> 8) & ~all_pieces;
     while (single_step_moves_black) {
         int to = __builtin_ctzll(single_step_moves_black);
-        moves[(*num_moves)++] = (Move){to + 8, to, NORMAL_MOVE, 0};
+        moves[(*num_moves)++] = (Move){to + 8, to, QUIET};
         single_step_moves_black &= single_step_moves_black - 1;
     }
 
@@ -160,7 +160,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
         ((single_step_moves_black & (1ULL << 48)) >> 8) & ~all_pieces;
     while (double_step_moves_black) {
         int to = __builtin_ctzll(double_step_moves_black);
-        moves[(*num_moves)++] = (Move){to + 16, to, DOUBLE_PAWN_PUSH, 0};
+        moves[(*num_moves)++] = (Move){to + 16, to, QUIET};
         double_step_moves_black &= double_step_moves_black - 1;
     }
 
@@ -173,7 +173,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
         if (!(all_pieces & (1ULL << from))) {
             from = to + 7;
         }
-        moves[(*num_moves)++] = (Move){from, to, NORMAL_MOVE, 0};
+        moves[(*num_moves)++] = (Move){from, to, CAPTURE};
         captures_black &= captures_black - 1;
     }
 }
@@ -198,7 +198,7 @@ Bitboard king_attacks(Bitboard kingSet) {
 void add_moves(Bitboard piece_moves, Move *moves, size_t *num_moves) {
     for (int square = 0; square < BOARD_SIZE; square++) {
         if (piece_moves & (1ULL << square)) {
-            moves[(*num_moves)++] = (Move){-1, square, 0, 0};
+            moves[(*num_moves)++] = (Move){-1, square, QUIET};
         }
     }
 }
@@ -374,10 +374,8 @@ void generate_sliding_moves(State *game, Bitboard pieces, size_t *num_moves,
             }
 
             if (piece_moves & (1ULL << square)) {
-                game->moves[*num_moves].from = -1;
+                game->moves[*num_moves].from = square;
                 game->moves[*num_moves].to = square;
-                game->moves[*num_moves].flags = 0;
-                game->moves[*num_moves].promoted_piece = 0;
                 (*num_moves)++;
             }
         }
@@ -402,13 +400,10 @@ void generate_moves(State *game) {
     generate_sliding_moves(game, game->bit_boards[4], &num_moves, QUEEN);
     generate_sliding_moves(game, game->bit_boards[10], &num_moves, QUEEN);
 
-    printf("Number of moves: %lu\n", num_moves);
-    for (size_t i = 0; i < num_moves; i++) {
-        printf("From: %d, To: %d, Flags: %d, "
-               "Promoted Piece: %d\n",
-               game->moves[i].from, game->moves[i].to, game->moves[i].flags,
-               game->moves[i].promoted_piece);
-    }
+    // printf("Number of moves: %lu\n", num_moves);
+    // for (size_t i = 0; i < num_moves; i++) {
+    //     printf("From: %d, To: %d\n", game->moves[i].from, game->moves[i].to);
+    // }
 }
 
 void move_piece() {

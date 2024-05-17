@@ -5,11 +5,18 @@
 
 #include "consts.h"
 
+typedef enum {
+    QUIET,
+    CAPTURE,
+    EVASION,
+    ENPASSANT,
+    CASTLING,
+} MoveType;
+
 typedef struct {
     int from;
     int to;
-    int flags;
-    int promoted_piece;
+    MoveType type;
 } Move;
 
 typedef uint64_t Bitboard;
