@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "consts.h"
 #include "engine.h"
@@ -132,7 +133,7 @@ inline Bitboard b_single_push_targets(Bitboard bpawns, Bitboard occ) {
     return sout_one(bpawns) & ~occ;
 }
 
-Bitboard b_double_push_Targets(Bitboard bpawns, Bitboard occ) {
+Bitboard b_dbl_push_targets(Bitboard bpawns, Bitboard occ) {
     Bitboard single_pushs = b_single_push_targets(bpawns, occ);
     return sout_one(single_pushs) & ~occ & RANK_5;
 }
@@ -147,10 +148,8 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
     Bitboard black_single_pushes =
         b_single_push_targets(black_pawns, all_pieces);
 
-    Bitboard white_dbl_pushes =
-        w_single_push_targets(white_single_pushes, all_pieces);
-    Bitboard black_dbl_pushes =
-        b_single_push_targets(black_single_pushes, all_pieces);
+    Bitboard white_dbl_pushes = w_dbl_push_targets(white_pawns, all_pieces);
+    Bitboard black_dbl_pushes = b_dbl_push_targets(black_pawns, all_pieces);
 
     for (size_t sq = 0; sq < BOARD_SIZE; sq++) {
         if (white_single_pushes & (1ULL << sq)) {
@@ -182,28 +181,38 @@ Bitboard king_attacks(Bitboard kingSet) {
     return attacks;
 }
 
-void add_moves(Bitboard piece_moves, Move *moves, size_t *num_moves) {
-    for (int square = 0; square < BOARD_SIZE; square++) {
-        if (piece_moves & (1ULL << square)) {
-            moves[(*num_moves)++] = (Move){-1, square, QUIET};
+void generate_king_moves(State *game, size_t *num_moves) {
+    Bitboard kings = game->bit_boards[5] | game->bit_boards[11];
+
+    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+        if (kings & (1ULL << sq)) {
+            Bitboard potential_moves = king_attacks(kings);
+            Bitboard occupied_squares = potential_moves & game->all_pieces;
+            Bitboard king_moves = potential_moves & ~occupied_squares;
+            for (int to_sq = 0; to_sq < BOARD_SIZE; to_sq++) {
+                if (king_moves & (1ULL << to_sq)) {
+                    game->moves[(*num_moves)++] = (Move){sq, to_sq, QUIET};
+                }
+            }
         }
     }
 }
 
-void generate_king_moves(State *game, size_t *num_moves, Colour colour) {
-    Bitboard kings = game->bit_boards[colour == WHITE ? 5 : 11];
-    Bitboard potential_moves = king_attacks(kings);
-    Bitboard occupied_squares = potential_moves & game->all_pieces;
-    Bitboard king_moves = potential_moves & ~occupied_squares;
-    add_moves(king_moves, game->moves, num_moves);
-}
+void generate_knight_moves(State *game, size_t *num_moves) {
+    Bitboard knights = game->bit_boards[1] | game->bit_boards[7];
 
-void generate_knight_moves(State *game, size_t *num_moves, Colour colour) {
-    Bitboard knights = game->bit_boards[colour == WHITE ? 1 : 7];
-    Bitboard potential_moves = knight_attacks(knights);
-    Bitboard occupied_squares = potential_moves & game->all_pieces;
-    Bitboard knight_moves = potential_moves & ~occupied_squares;
-    add_moves(knight_moves, game->moves, num_moves);
+    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+        if (knights & (1ULL << sq)) {
+            Bitboard potential_moves = knight_attacks((1ULL << sq));
+            Bitboard occupied_squares = potential_moves & game->all_pieces;
+            Bitboard knight_moves = potential_moves & ~occupied_squares;
+            for (int to_sq = 0; to_sq < BOARD_SIZE; to_sq++) {
+                if (knight_moves & (1ULL << to_sq)) {
+                    game->moves[(*num_moves)++] = (Move){sq, to_sq, QUIET};
+                }
+            }
+        }
+    }
 }
 
 inline Bitboard init_rank(int s) {
@@ -370,14 +379,14 @@ void generate_sliding_moves(State *game, Bitboard pieces, size_t *num_moves,
 }
 
 void generate_moves(State *game) {
+    memset(game->moves, 0, sizeof game->moves);
+
     size_t num_moves = 0;
 
     // Single move pieces
     generate_pawn_moves(game, &num_moves);
-    generate_knight_moves(game, &num_moves, WHITE);
-    generate_knight_moves(game, &num_moves, BLACK);
-    generate_king_moves(game, &num_moves, WHITE);
-    generate_king_moves(game, &num_moves, BLACK);
+    generate_knight_moves(game, &num_moves);
+    generate_king_moves(game, &num_moves);
 
     // Sliding pieces
     generate_sliding_moves(game, game->bit_boards[3], &num_moves, ROOK);
@@ -398,7 +407,7 @@ void move_piece() {
 }
 
 State new_state() {
-    State game;
+    State game = {0};
 
     game.all_pieces = EMPTY_BOARD;
     for (size_t i = 0; i < PIECE_TYPE_COUNT; i++) {

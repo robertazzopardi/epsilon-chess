@@ -136,18 +136,22 @@ static void game_loop(Window *window, State *game,
         // Render possible moves for selected piece
         if (piece) {
             for (int sq = 0; sq < MAX_MOVES; sq++) {
-                if (get_square(piece->rect.y / SQUARE_SIZE,
-                               piece->rect.x / SQUARE_SIZE) ==
-                    game->moves[sq].from) {
+                int from_sq = get_square(piece->rect.y / SQUARE_SIZE,
+                                         piece->rect.x / SQUARE_SIZE);
+
+                printf("%d %d\n", from_sq, game->moves[sq].from);
+                if (from_sq == game->moves[sq].from) {
                     int to = game->moves[sq].to;
-                    // Location loc = get_location(game->moves[sq].to);
+
+                    // bug: weird extra possible move display on first square on
+                    // the board
 
                     int x = (to & 7) * SQUARE_SIZE + cell_radius;
                     int y = (to >> 3) * SQUARE_SIZE + cell_radius;
 
-                    printf("%d %d\n", x, y);
                     filledCircleRGBA(window->rend, x, y, 30, SQUARE_SIZE,
                                      SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                    // printf("%d\n", to);
                 }
             }
         }
