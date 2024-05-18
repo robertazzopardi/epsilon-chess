@@ -3,6 +3,8 @@
 
 // Define constants for the chess board
 #define BOARD_SIZE 64
+#define RANKS 8
+#define FILES 8
 #define EMPTY_BOARD 0ULL
 
 #define PIECE_TYPE_COUNT 12

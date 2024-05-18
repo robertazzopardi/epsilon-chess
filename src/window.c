@@ -139,10 +139,11 @@ static void game_loop(Window *window, State *game,
                 if (get_square(piece->rect.y / SQUARE_SIZE,
                                piece->rect.x / SQUARE_SIZE) ==
                     game->moves[sq].from) {
-                    Location loc = get_location(game->moves[sq].to);
+                    int to = game->moves[sq].to;
+                    // Location loc = get_location(game->moves[sq].to);
 
-                    int x = (loc.rank * SQUARE_SIZE) + cell_radius;
-                    int y = (loc.file * SQUARE_SIZE) + cell_radius;
+                    int x = (to & 7) * SQUARE_SIZE + cell_radius;
+                    int y = (to >> 3) * SQUARE_SIZE + cell_radius;
 
                     printf("%d %d\n", x, y);
                     filledCircleRGBA(window->rend, x, y, 30, SQUARE_SIZE,

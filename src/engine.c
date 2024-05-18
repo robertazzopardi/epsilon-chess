@@ -74,10 +74,10 @@ static const Bitboard pieces[] = {
     BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
 };
 
-const Bitboard notAFile = 0xfefefefefefefefeULL;
-const Bitboard notHFile = 0x7f7f7f7f7f7f7f7fULL;
-const Bitboard notABFile = 0xfcfcfcfcfcfcfcfcULL;
-const Bitboard notGHFile = 0x3f3f3f3f3f3f3f3fULL;
+const Bitboard not_a_file = 0xfefefefefefefefeULL;
+const Bitboard not_h_file = 0x7f7f7f7f7f7f7f7fULL;
+const Bitboard not_ab_file = 0xfcfcfcfcfcfcfcfcULL;
+const Bitboard not_gh_file = 0x3f3f3f3f3f3f3f3fULL;
 
 inline Bitboard sout_one(Bitboard b) {
     return b >> 8;
@@ -88,101 +88,88 @@ inline Bitboard nort_one(Bitboard b) {
 }
 
 inline Bitboard east_one(Bitboard b) {
-    return (b << 1) & notAFile;
+    return (b << 1) & not_a_file;
 }
 
 inline Bitboard no_ea_one(Bitboard b) {
-    return (b << 9) & notAFile;
+    return (b << 9) & not_a_file;
 }
 
 inline Bitboard so_ea_one(Bitboard b) {
-    return (b >> 7) & notAFile;
+    return (b >> 7) & not_a_file;
 }
 
 inline Bitboard west_one(Bitboard b) {
-    return (b >> 1) & notHFile;
+    return (b >> 1) & not_h_file;
 }
 
 inline Bitboard so_we_one(Bitboard b) {
-    return (b >> 9) & notHFile;
+    return (b >> 9) & not_h_file;
 }
 
 inline Bitboard no_we_one(Bitboard b) {
-    return (b << 7) & notHFile;
+    return (b << 7) & not_h_file;
+}
+
+inline Bitboard rotate_left(Bitboard x, int s) {
+    return (x << s) | (x >> (BOARD_SIZE - s));
+}
+
+inline Bitboard rotate_right(Bitboard x, int s) {
+    return (x >> s) | (x << (BOARD_SIZE - s));
+}
+
+inline Bitboard w_single_push_targets(Bitboard wpawns, Bitboard occ) {
+    return nort_one(wpawns) & ~occ;
+}
+
+Bitboard w_dbl_push_targets(Bitboard wpawns, Bitboard occ) {
+    Bitboard single_pushs = w_single_push_targets(wpawns, occ);
+    return nort_one(single_pushs) & ~occ & RANK_4;
+}
+
+inline Bitboard b_single_push_targets(Bitboard bpawns, Bitboard occ) {
+    return sout_one(bpawns) & ~occ;
+}
+
+Bitboard b_double_push_Targets(Bitboard bpawns, Bitboard occ) {
+    Bitboard single_pushs = b_single_push_targets(bpawns, occ);
+    return sout_one(single_pushs) & ~occ & RANK_5;
 }
 
 void generate_pawn_moves(State *game, size_t *num_moves) {
     Bitboard white_pawns = game->bit_boards[0];
     Bitboard black_pawns = game->bit_boards[6];
     Bitboard all_pieces = game->all_pieces;
-    Move *moves = game->moves;
 
-    // Single-step advances for white pawns
-    Bitboard single_step_moves_white = (white_pawns << 8) & ~all_pieces;
-    while (single_step_moves_white) {
-        int to = __builtin_ctzll(single_step_moves_white);
-        moves[(*num_moves)++] = (Move){to - 8, to, QUIET};
-        single_step_moves_white &= single_step_moves_white - 1;
-    }
+    Bitboard white_single_pushes =
+        w_single_push_targets(white_pawns, all_pieces);
+    Bitboard black_single_pushes =
+        b_single_push_targets(black_pawns, all_pieces);
 
-    // Double-step advances from starting position for white pawns
-    Bitboard double_step_moves_white =
-        ((single_step_moves_white & (1ULL << 16)) << 8) & ~all_pieces;
-    while (double_step_moves_white) {
-        int to = __builtin_ctzll(double_step_moves_white);
-        moves[(*num_moves)++] = (Move){to - 16, to, QUIET};
-        double_step_moves_white &= double_step_moves_white - 1;
-    }
+    Bitboard white_dbl_pushes =
+        w_single_push_targets(white_single_pushes, all_pieces);
+    Bitboard black_dbl_pushes =
+        b_single_push_targets(black_single_pushes, all_pieces);
 
-    // Capturing moves diagonally for white pawns
-    Bitboard captures_white = ((white_pawns & ~A_FILE) << 7) & ~H_FILE;
-    captures_white |= ((white_pawns & ~H_FILE) << 9) & ~A_FILE;
-    while (captures_white) {
-        int to = __builtin_ctzll(captures_white);
-        int from = to - 9;
-        if (!(all_pieces & (1ULL << from))) {
-            from = to - 7;
+    for (size_t sq = 0; sq < BOARD_SIZE; sq++) {
+        if (white_single_pushes & (1ULL << sq)) {
+            game->moves[(*num_moves)++] = (Move){sq - 8, sq, QUIET};
+        } else if (black_single_pushes & (1ULL << sq)) {
+            game->moves[(*num_moves)++] = (Move){sq + 8, sq, QUIET};
+        } else if (white_dbl_pushes & (1ULL << sq)) {
+            game->moves[(*num_moves)++] = (Move){sq - 16, sq, DOUBLE_PAWN_PUSH};
+        } else if (black_dbl_pushes & (1ULL << sq)) {
+            game->moves[(*num_moves)++] = (Move){sq + 16, sq, DOUBLE_PAWN_PUSH};
         }
-        moves[(*num_moves)++] = (Move){from, to, CAPTURE};
-        captures_white &= captures_white - 1;
-    }
-
-    // Single-step advances for black pawns
-    Bitboard single_step_moves_black = (black_pawns >> 8) & ~all_pieces;
-    while (single_step_moves_black) {
-        int to = __builtin_ctzll(single_step_moves_black);
-        moves[(*num_moves)++] = (Move){to + 8, to, QUIET};
-        single_step_moves_black &= single_step_moves_black - 1;
-    }
-
-    // Double-step advances from starting position for black pawns
-    Bitboard double_step_moves_black =
-        ((single_step_moves_black & (1ULL << 48)) >> 8) & ~all_pieces;
-    while (double_step_moves_black) {
-        int to = __builtin_ctzll(double_step_moves_black);
-        moves[(*num_moves)++] = (Move){to + 16, to, QUIET};
-        double_step_moves_black &= double_step_moves_black - 1;
-    }
-
-    // Capturing moves diagonally for black pawns
-    Bitboard captures_black = ((black_pawns & ~H_FILE) >> 7) & ~A_FILE;
-    captures_black |= ((black_pawns & ~A_FILE) >> 9) & ~H_FILE;
-    while (captures_black) {
-        int to = __builtin_ctzll(captures_black);
-        int from = to + 9;
-        if (!(all_pieces & (1ULL << from))) {
-            from = to + 7;
-        }
-        moves[(*num_moves)++] = (Move){from, to, CAPTURE};
-        captures_black &= captures_black - 1;
     }
 }
 
 Bitboard knight_attacks(Bitboard knights) {
-    Bitboard l1 = (knights >> 1) & notHFile;
-    Bitboard l2 = (knights >> 2) & notGHFile;
-    Bitboard r1 = (knights << 1) & notAFile;
-    Bitboard r2 = (knights << 2) & notABFile;
+    Bitboard l1 = (knights >> 1) & not_h_file;
+    Bitboard l2 = (knights >> 2) & not_gh_file;
+    Bitboard r1 = (knights << 1) & not_a_file;
+    Bitboard r2 = (knights << 2) & not_ab_file;
     Bitboard h1 = l1 | r1;
     Bitboard h2 = l2 | r2;
     return (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8);
@@ -402,7 +389,8 @@ void generate_moves(State *game) {
 
     // printf("Number of moves: %lu\n", num_moves);
     // for (size_t i = 0; i < num_moves; i++) {
-    //     printf("From: %d, To: %d\n", game->moves[i].from, game->moves[i].to);
+    //     printf("From: %d, To: %d\n", game->moves[i].from,
+    //     game->moves[i].to);
     // }
 }
 
