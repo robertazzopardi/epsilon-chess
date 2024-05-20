@@ -11,7 +11,7 @@
 
 #define FRAME_DELAY 1000.0f / 60.0f
 
-static const int cell_radius = (WIDTH / ROW_COUNT) / 2;
+static const int cell_radius = SQUARE_SIZE / 2;
 
 typedef struct {
     SDL_Point mouse_pos;
@@ -29,37 +29,32 @@ static void handle_events(Window *window, State *game, Piece **piece,
             *running = false;
             break;
         case SDL_MOUSEBUTTONUP:
-            if (event->event.button.button == SDL_BUTTON_LEFT) {
+            if (event->event.button.button == SDL_BUTTON_LEFT &&
+                piece != NULL) {
+                if (can_move(game, &event->mouse_pos, &event->old_pos)) {
+                    // SDL_SetWindowTitle(
+                    //     window->win,
+                    //     PLAYER_TO_MOVE(window->board->toMove));
 
-                if (piece != NULL) {
+                    (*piece)->rect.x =
+                        (event->mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
+                    (*piece)->rect.y =
+                        (event->mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
 
-                    if (true) {
-                        // SDL_SetWindowTitle(
-                        //     window->win,
-                        //     PLAYER_TO_MOVE(window->board->toMove));
-
-                        (*piece)->rect.x =
-                            (event->mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
-                        (*piece)->rect.y =
-                            (event->mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
-
-                        *piece = NULL;
-                        generate_moves(game);
-                    } else {
-                        (*piece)->rect.x = event->old_pos.x;
-                        (*piece)->rect.y = event->old_pos.y;
-                    }
+                    *piece = NULL;
+                    generate_moves(game);
+                } else if (*piece != NULL) {
+                    (*piece)->rect.x = event->old_pos.x;
+                    (*piece)->rect.y = event->old_pos.y;
                 }
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
             if (event->event.button.button == SDL_BUTTON_LEFT) {
-
-                *piece = NULL;
                 check_if_piece(&event->mouse_pos, &event->offset, game, pieces,
                                &*piece);
 
-                if (*piece) {
+                if (*piece != NULL) {
                     event->old_pos.x = (*piece)->rect.x;
                     event->old_pos.y = (*piece)->rect.y;
                 }
@@ -84,7 +79,8 @@ static void handle_events(Window *window, State *game, Piece **piece,
             event->mouse_pos.x = event->event.motion.x;
             event->mouse_pos.y = event->event.motion.y;
 
-            if (event->event.button.button == SDL_BUTTON_LEFT && *piece) {
+            if (event->event.button.button == SDL_BUTTON_LEFT &&
+                *piece != NULL) {
                 window->board->selected_square = EMPTY;
                 (*piece)->rect.x = event->mouse_pos.x - event->offset.x;
                 (*piece)->rect.y = event->mouse_pos.y - event->offset.y;
@@ -98,7 +94,6 @@ static void handle_events(Window *window, State *game, Piece **piece,
 
 static void game_loop(Window *window, State *game,
                       PieceTextureMap *texture_map) {
-
     // SDL_SetWindowTitle(window->win, PLAYER_TO_MOVE(window->board->toMove));
 
     SDL_Rect selected_square = {
@@ -134,22 +129,18 @@ static void game_loop(Window *window, State *game,
         }
 
         // Render possible moves for selected piece
-        if (piece) {
+        if (piece != NULL) {
             for (Square sq = 0; sq < MAX_MOVES; sq++) {
                 Square from_sq = get_square(piece->rect.y / SQUARE_SIZE,
                                             piece->rect.x / SQUARE_SIZE);
 
                 if (from_sq == game->moves[sq].from) {
                     int to = game->moves[sq].to;
-
-                    // bug: weird extra possible move display on first square on
-                    // the board
-
                     int x = (to & 7) * SQUARE_SIZE + cell_radius;
                     int y = (to >> 3) * SQUARE_SIZE + cell_radius;
 
-                    filledCircleRGBA(window->rend, x, y, 30, SQUARE_SIZE,
-                                     SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                    filledCircleRGBA(window->rend, x, y, 30, 100, 100, 100,
+                                     100);
                 }
             }
         }
@@ -190,10 +181,11 @@ void initialise() {
     Window window = {
         .win = SDL_CreateWindow("Chess", SDL_WINDOWPOS_CENTERED,
                                 SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0),
+        .rend = SDL_CreateRenderer(window.win, -1,
+                                   SDL_RENDERER_ACCELERATED |
+                                       SDL_RENDERER_PRESENTVSYNC),
+        .board = make_board(window.rend),
     };
-    window.rend = SDL_CreateRenderer(
-        window.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    window.board = make_board(window.rend);
 
     State game = new_state();
 

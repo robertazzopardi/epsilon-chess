@@ -1,5 +1,6 @@
 #include <SDL_rect.h>
 #include <SDL_render.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "board.h"
@@ -16,31 +17,6 @@
 #define KING_IMG "./assets/864630-chess/svg/pieces/king.svg"
 
 #define PIECE_COUNT 16
-
-// static bool canCastle(MoveConditions *mc, Moves *moves) {
-//     int y = mc->pieceLocation->y;
-//     for (int i = 1; i < ROW_COUNT - mc->pieceLocation->x; i++) {
-//         int x = mc->pieceLocation->x + i;
-//         Initial initial = checkWhichPiece(x, y, mc->player);
-//         if (initial != rook && initial != empty) {
-//             break;
-//         } else if (initial == rook) {
-//             moves->squares[moves->count++] = (SDL_Point){x - 1, y};
-//         }
-//     }
-//
-//     for (int i = 1; i <= mc->pieceLocation->x; i++) {
-//         int x = mc->pieceLocation->x - i;
-//         Initial initial = checkWhichPiece(x, y, mc->player);
-//         if (initial != rook && initial != empty) {
-//             break;
-//         } else if (initial == rook) {
-//             moves->squares[moves->count++] = (SDL_Point){x + 2, y};
-//         }
-//     }
-//
-//     return false;
-// }
 
 static inline SDL_Rect get_piece_rect(int sq) {
     Location loc = get_location(sq);
@@ -63,6 +39,21 @@ void check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
             break;
         }
     }
+}
+
+bool can_move(State *game, SDL_Point *mouse_pos, SDL_Point *old_pos) {
+    for (Square sq = 0; sq < MAX_MOVES; sq++) {
+        Square from_sq =
+            get_square(old_pos->y / SQUARE_SIZE, old_pos->x / SQUARE_SIZE);
+        Square to_sq =
+            get_square(mouse_pos->y / SQUARE_SIZE, mouse_pos->x / SQUARE_SIZE);
+
+        if (from_sq == game->moves[sq].from && to_sq == game->moves[sq].to) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 PieceTextureMap new_texture_map(SDL_Renderer *renderer) {

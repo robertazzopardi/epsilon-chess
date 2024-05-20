@@ -2,6 +2,7 @@
 #define PIECE_H
 
 #include <SDL_rect.h>
+#include <stdbool.h>
 
 typedef struct SDL_Texture SDL_Texture;
 typedef struct SDL_Point SDL_Point;
@@ -36,5 +37,7 @@ void make_pieces(Piece *, PieceTextureMap *, State *);
 void draw_pieces(Window *, State *, Piece *);
 
 void check_if_piece(SDL_Point *, SDL_Point *, State *, Piece[], Piece **);
+
+bool can_move(State *, SDL_Point *, SDL_Point *);
 
 #endif /* PIECE_H */
