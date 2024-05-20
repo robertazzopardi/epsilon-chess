@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "consts.h"
 #include "engine.h"
@@ -357,8 +356,20 @@ Bitboard queen_attacks(Bitboard pieces, Bitboard occ, int sq) {
            sliding_attacks(pieces, occ, sq, BISHOP);
 }
 
-void generate_sliding_moves(State *game, Bitboard pieces, size_t *num_moves,
-                            Piece piece) {
+void generate_sliding_moves(State *game, size_t *num_moves, Piece piece) {
+    Bitboard pieces = EMPTY_BOARD;
+    switch (piece) {
+    case ROOK:
+        pieces = game->bit_boards[3] | game->bit_boards[9];
+        break;
+    case BISHOP:
+        pieces = game->bit_boards[2] | game->bit_boards[8];
+        break;
+    case QUEEN:
+        pieces = game->bit_boards[4] | game->bit_boards[10];
+        break;
+    }
+
     for (int square = 0; square < BOARD_SIZE; square++) {
         if (pieces & (1ULL << square)) {
             Bitboard piece_moves = 0;
@@ -378,28 +389,27 @@ void generate_sliding_moves(State *game, Bitboard pieces, size_t *num_moves,
     }
 }
 
+inline Move empty_move() {
+    return (Move){EMPTY, EMPTY, QUIET};
+}
+
 void generate_moves(State *game) {
-    memset(game->moves, 0, sizeof game->moves);
+    for (size_t i = 0; i < MAX_MOVES; i++) {
+        game->moves[i] = empty_move();
+    }
 
     size_t num_moves = 0;
 
-    // Single move pieces
     generate_pawn_moves(game, &num_moves);
     generate_knight_moves(game, &num_moves);
     generate_king_moves(game, &num_moves);
-
-    // Sliding pieces
-    generate_sliding_moves(game, game->bit_boards[3], &num_moves, ROOK);
-    generate_sliding_moves(game, game->bit_boards[9], &num_moves, ROOK);
-    generate_sliding_moves(game, game->bit_boards[2], &num_moves, BISHOP);
-    generate_sliding_moves(game, game->bit_boards[8], &num_moves, BISHOP);
-    generate_sliding_moves(game, game->bit_boards[4], &num_moves, QUEEN);
-    generate_sliding_moves(game, game->bit_boards[10], &num_moves, QUEEN);
+    generate_sliding_moves(game, &num_moves, ROOK);
+    generate_sliding_moves(game, &num_moves, BISHOP);
+    generate_sliding_moves(game, &num_moves, QUEEN);
 
     // printf("Number of moves: %lu\n", num_moves);
     // for (size_t i = 0; i < num_moves; i++) {
-    //     printf("From: %d, To: %d\n", game->moves[i].from,
-    //     game->moves[i].to);
+    //     printf("From: %d, To: %d\n", game->moves[i].from, game->moves[i].to);
     // }
 }
 

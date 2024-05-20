@@ -135,11 +135,10 @@ static void game_loop(Window *window, State *game,
 
         // Render possible moves for selected piece
         if (piece) {
-            for (int sq = 0; sq < MAX_MOVES; sq++) {
-                int from_sq = get_square(piece->rect.y / SQUARE_SIZE,
-                                         piece->rect.x / SQUARE_SIZE);
+            for (Square sq = 0; sq < MAX_MOVES; sq++) {
+                Square from_sq = get_square(piece->rect.y / SQUARE_SIZE,
+                                            piece->rect.x / SQUARE_SIZE);
 
-                printf("%d %d\n", from_sq, game->moves[sq].from);
                 if (from_sq == game->moves[sq].from) {
                     int to = game->moves[sq].to;
 
@@ -151,7 +150,6 @@ static void game_loop(Window *window, State *game,
 
                     filledCircleRGBA(window->rend, x, y, 30, SQUARE_SIZE,
                                      SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
-                    // printf("%d\n", to);
                 }
             }
         }

@@ -14,8 +14,8 @@ typedef enum {
 } MoveType;
 
 typedef struct {
-    int from;
-    int to;
+    Square from;
+    Square to;
     MoveType type;
 } Move;
 
