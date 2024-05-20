@@ -9,10 +9,10 @@ typedef struct PieceTexture {
     SDL_Texture *white;
 } PieceTexture;
 
-PieceTexture *getTexture(SDL_Renderer *, const char *);
+PieceTexture *get_texture(SDL_Renderer *, const char *);
 
-SDL_Texture *makeTexture(SDL_Renderer *, char *, long);
+SDL_Texture *make_texture(SDL_Renderer *, char *, long);
 
-char *openFile(const char *, long *);
+char *open_file(const char *, long *);
 
 #endif /* SVG_UTIL_H */

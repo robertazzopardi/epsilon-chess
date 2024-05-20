@@ -57,12 +57,12 @@ bool can_move(State *game, SDL_Point *mouse_pos, SDL_Point *old_pos) {
 }
 
 PieceTextureMap new_texture_map(SDL_Renderer *renderer) {
-    PieceTexture *pawn = getTexture(renderer, PAWN_IMG);
-    PieceTexture *rook = getTexture(renderer, ROOK_IMG);
-    PieceTexture *knight = getTexture(renderer, KNIGHT_IMG);
-    PieceTexture *bishop = getTexture(renderer, BISHOP_IMG);
-    PieceTexture *queen = getTexture(renderer, QUEEN_IMG);
-    PieceTexture *king = getTexture(renderer, KING_IMG);
+    PieceTexture *pawn = get_texture(renderer, PAWN_IMG);
+    PieceTexture *rook = get_texture(renderer, ROOK_IMG);
+    PieceTexture *knight = get_texture(renderer, KNIGHT_IMG);
+    PieceTexture *bishop = get_texture(renderer, BISHOP_IMG);
+    PieceTexture *queen = get_texture(renderer, QUEEN_IMG);
+    PieceTexture *king = get_texture(renderer, KING_IMG);
 
     return (PieceTextureMap){pawn, rook, knight, bishop, queen, king};
 }

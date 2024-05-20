@@ -58,7 +58,7 @@ static char *replace(char *orig, char *rep, char *with) {
     return result;
 }
 
-char *openFile(const char *inputFilename, long *fsize) {
+char *open_file(const char *inputFilename, long *fsize) {
     FILE *f = fopen(inputFilename, "rb");
     fseek(f, 0, SEEK_END);
     *fsize = ftell(f);
@@ -74,15 +74,15 @@ char *openFile(const char *inputFilename, long *fsize) {
     return string;
 }
 
-SDL_Texture *makeTexture(SDL_Renderer *renderer, char *string, long fsize) {
+SDL_Texture *make_texture(SDL_Renderer *renderer, char *string, long fsize) {
     SDL_RWops *rw = SDL_RWFromConstMem(string, fsize);
     SDL_Surface *surface = IMG_LoadSVG_RW(rw);
     return SDL_CreateTextureFromSurface(renderer, surface);
 }
 
-PieceTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
+PieceTexture *get_texture(SDL_Renderer *renderer, const char *inputFilename) {
     long fsize = 0L;
-    char *black = openFile(inputFilename, &fsize);
+    char *black = open_file(inputFilename, &fsize);
 
     char *white = "\0";
     if (strstr(black, BLACK) != NULL) {
@@ -92,8 +92,8 @@ PieceTexture *getTexture(SDL_Renderer *renderer, const char *inputFilename) {
     }
 
     PieceTexture *textures = malloc(1 * sizeof(*textures));
-    textures->black = makeTexture(renderer, black, fsize);
-    textures->white = makeTexture(renderer, white, fsize);
+    textures->black = make_texture(renderer, black, fsize);
+    textures->white = make_texture(renderer, white, fsize);
 
     free(black);
     black = NULL;

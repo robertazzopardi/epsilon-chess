@@ -12,8 +12,8 @@ Board *make_board(SDL_Renderer *renderer) {
 
     // Set up the Boards texture
     long fsize = 0L;
-    char *string = openFile(CHESS_BOARD, &fsize);
-    board->texture = makeTexture(renderer, string, fsize);
+    char *string = open_file(CHESS_BOARD, &fsize);
+    board->texture = make_texture(renderer, string, fsize);
     free(string);
     string = NULL;
 
