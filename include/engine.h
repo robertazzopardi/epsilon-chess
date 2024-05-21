@@ -6,6 +6,21 @@
 #include "consts.h"
 
 typedef enum {
+    PAWN,
+    ROOK,
+    KNIGHT,
+    BISHOP,
+    QUEEN,
+    KING,
+    NONE,
+} Piece;
+
+typedef enum {
+    WHITE,
+    BLACK,
+} Colour;
+
+typedef enum {
     QUIET,
     CAPTURE,
     EVASION,
@@ -17,6 +32,7 @@ typedef struct {
     Square from;
     Square to;
     MoveType type;
+    Piece piece;
 } Move;
 
 typedef uint64_t Bitboard;
@@ -27,14 +43,16 @@ typedef struct State {
     Move moves[MAX_MOVES];
 } State;
 
-State new_state();
-
-void generate_moves(State *);
-
 typedef struct Location {
     int rank;
     int file;
 } Location;
+
+State new_state();
+
+void generate_moves(State *);
+
+void move_piece(State *, Move *);
 
 inline Location get_location(int sq) {
     // int file = sq & 7;

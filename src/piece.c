@@ -25,7 +25,7 @@ static inline SDL_Rect get_piece_rect(int sq) {
 }
 
 void check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
-                    Piece pieces[], Piece **piece) {
+                    PieceObject pieces[], PieceObject **piece) {
     for (int sq = 0; sq < BOARD_SIZE; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (SDL_PointInRect(mouse_pos, &rect) &&
@@ -41,7 +41,8 @@ void check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
     }
 }
 
-bool can_move(State *game, SDL_Point *mouse_pos, SDL_Point *old_pos) {
+void can_move(Move **move, State *game, SDL_Point *mouse_pos,
+              SDL_Point *old_pos) {
     for (Square sq = 0; sq < MAX_MOVES; sq++) {
         Square from_sq =
             get_square(old_pos->y / SQUARE_SIZE, old_pos->x / SQUARE_SIZE);
@@ -49,11 +50,10 @@ bool can_move(State *game, SDL_Point *mouse_pos, SDL_Point *old_pos) {
             get_square(mouse_pos->y / SQUARE_SIZE, mouse_pos->x / SQUARE_SIZE);
 
         if (from_sq == game->moves[sq].from && to_sq == game->moves[sq].to) {
-            return true;
+            *move = &game->moves[sq];
+            return;
         }
     }
-
-    return false;
 }
 
 PieceTextureMap new_texture_map(SDL_Renderer *renderer) {
@@ -107,38 +107,39 @@ void clean_up_texture_map(PieceTextureMap *map) {
     map->queen = NULL;
 }
 
-void make_pieces(Piece *pieces, PieceTextureMap *map, State *game) {
-    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+void make_pieces(PieceObject *pieces, PieceTextureMap *map, State *game) {
+    for (Square sq = A1; sq < H8; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (game->bit_boards[0] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->pawn->white, rect};
+            pieces[sq] = (PieceObject){map->pawn->white, rect};
         } else if (game->bit_boards[6] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->pawn->black, rect};
+            pieces[sq] = (PieceObject){map->pawn->black, rect};
         } else if (game->bit_boards[1] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->knight->white, rect};
+            pieces[sq] = (PieceObject){map->knight->white, rect};
         } else if (game->bit_boards[7] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->knight->black, rect};
+            pieces[sq] = (PieceObject){map->knight->black, rect};
         } else if (game->bit_boards[2] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->bishop->white, rect};
+            pieces[sq] = (PieceObject){map->bishop->white, rect};
         } else if (game->bit_boards[8] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->bishop->black, rect};
+            pieces[sq] = (PieceObject){map->bishop->black, rect};
         } else if (game->bit_boards[3] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->rook->white, rect};
+            pieces[sq] = (PieceObject){map->rook->white, rect};
         } else if (game->bit_boards[9] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->rook->black, rect};
+            pieces[sq] = (PieceObject){map->rook->black, rect};
         } else if (game->bit_boards[4] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->king->white, rect};
+            pieces[sq] = (PieceObject){map->king->white, rect};
         } else if (game->bit_boards[10] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->king->black, rect};
+            pieces[sq] = (PieceObject){map->king->black, rect};
         } else if (game->bit_boards[5] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->queen->white, rect};
+            pieces[sq] = (PieceObject){map->queen->white, rect};
         } else if (game->bit_boards[11] & (1ULL << sq)) {
-            pieces[sq] = (Piece){map->queen->black, rect};
+            pieces[sq] = (PieceObject){map->queen->black, rect};
         }
     }
 }
 
-void render_if_occupied(Window *window, State *game, Piece *piece, int sq) {
+void render_if_occupied(Window *window, State *game, PieceObject *piece,
+                        int sq) {
     for (int i = 0; i < PIECE_TYPE_COUNT; i++) {
         if (game->bit_boards[i] & (1ULL << sq)) {
             SDL_RenderCopy(window->rend, piece->texture, NULL, &piece->rect);
@@ -147,9 +148,9 @@ void render_if_occupied(Window *window, State *game, Piece *piece, int sq) {
     }
 }
 
-void draw_pieces(Window *window, State *game, Piece *pieces) {
-    for (int sq = 0; sq < BOARD_SIZE; sq++) {
-        Piece piece = pieces[sq];
+void draw_pieces(Window *window, State *game, PieceObject *pieces) {
+    for (Square sq = A1; sq < H8; sq++) {
+        PieceObject piece = pieces[sq];
         render_if_occupied(window, game, &piece, sq);
     }
 }

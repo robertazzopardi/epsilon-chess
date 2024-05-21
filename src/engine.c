@@ -4,19 +4,15 @@
 #include "consts.h"
 #include "engine.h"
 
-typedef enum { ROOK, BISHOP, QUEEN } Piece;
-
-typedef enum { WHITE, BLACK } Colour;
-
 typedef enum {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST,
-    NORTH_WEST,
-    NORTH_EAST,
-    SOUTH_WEST,
-    SOUTH_EAST
+    NORTH = 8,
+    EAST = 1,
+    SOUTH = -8,
+    WEST = -1,
+    NORTH_WEST = 7,
+    NORTH_EAST = 9,
+    SOUTH_WEST = -9,
+    SOUTH_EAST = -7
 } Direction;
 
 static const Direction directions[4] = {
@@ -70,8 +66,8 @@ void print_board(Bitboard board) {
 }
 
 static const Bitboard pieces[] = {
-    WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
-    BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
+    WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_KING, WHITE_QUEEN,
+    BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_KING, BLACK_QUEEN,
 };
 
 const Bitboard not_a_file = 0xfefefefefefefefeULL;
@@ -150,15 +146,17 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
     Bitboard white_dbl_pushes = w_dbl_push_targets(white_pawns, all_pieces);
     Bitboard black_dbl_pushes = b_dbl_push_targets(black_pawns, all_pieces);
 
-    for (size_t sq = 0; sq < BOARD_SIZE; sq++) {
+    for (Square sq = A1; sq < H8; sq++) {
         if (white_single_pushes & (1ULL << sq)) {
-            game->moves[(*num_moves)++] = (Move){sq - 8, sq, QUIET};
+            game->moves[(*num_moves)++] = (Move){sq - 8, sq, QUIET, PAWN};
         } else if (black_single_pushes & (1ULL << sq)) {
-            game->moves[(*num_moves)++] = (Move){sq + 8, sq, QUIET};
+            game->moves[(*num_moves)++] = (Move){sq + 8, sq, QUIET, PAWN};
         } else if (white_dbl_pushes & (1ULL << sq)) {
-            game->moves[(*num_moves)++] = (Move){sq - 16, sq, DOUBLE_PAWN_PUSH};
+            game->moves[(*num_moves)++] =
+                (Move){sq - 16, sq, DOUBLE_PAWN_PUSH, PAWN};
         } else if (black_dbl_pushes & (1ULL << sq)) {
-            game->moves[(*num_moves)++] = (Move){sq + 16, sq, DOUBLE_PAWN_PUSH};
+            game->moves[(*num_moves)++] =
+                (Move){sq + 16, sq, DOUBLE_PAWN_PUSH, PAWN};
         }
     }
 }
@@ -190,7 +188,8 @@ void generate_king_moves(State *game, size_t *num_moves) {
             Bitboard king_moves = potential_moves & ~occupied_squares;
             for (int to_sq = 0; to_sq < BOARD_SIZE; to_sq++) {
                 if (king_moves & (1ULL << to_sq)) {
-                    game->moves[(*num_moves)++] = (Move){sq, to_sq, QUIET};
+                    game->moves[(*num_moves)++] =
+                        (Move){sq, to_sq, QUIET, KING};
                 }
             }
         }
@@ -207,7 +206,8 @@ void generate_knight_moves(State *game, size_t *num_moves) {
             Bitboard knight_moves = potential_moves & ~occupied_squares;
             for (int to_sq = 0; to_sq < BOARD_SIZE; to_sq++) {
                 if (knight_moves & (1ULL << to_sq)) {
-                    game->moves[(*num_moves)++] = (Move){sq, to_sq, QUIET};
+                    game->moves[(*num_moves)++] =
+                        (Move){sq, to_sq, QUIET, KNIGHT};
                 }
             }
         }
@@ -226,14 +226,14 @@ Bitboard init_diag(int sq) {
     int d = 8 * FILE_OF(sq) - (sq & 56);
     int n = -d & (d >> 31);
     int s = d & (-d >> 31);
-    return (0x8040201008040201ULL >> s) << n;
+    return (DIAG_MASK >> s) << n;
 }
 
 Bitboard init_anti(int sq) {
     int d = 56 - 8 * FILE_OF(sq) - (sq & 56);
     int n = -d & (d >> 31);
     int s = d & (-d >> 31);
-    return (0x0102040810204080ULL >> s) << n;
+    return (ANTI_DIAG_MASK >> s) << n;
 }
 
 inline Bitboard init_low(int sq, uint64_t line) {
@@ -278,37 +278,13 @@ void generate_attacks_by_ray(int square, Direction direction, Bitboard occ,
     bool found_obstruction = false;
 
     for (int i = 0; i < 8; i++) {
-        switch (direction) {
-        case NORTH:
-            current_square += 8;
-            break;
-        case EAST:
-            current_square += 1;
-            break;
-        case SOUTH:
-            current_square -= 8;
-            break;
-        case WEST:
-            current_square -= 1;
-            break;
-        case NORTH_WEST:
-            current_square += 7;
-            break;
-        case NORTH_EAST:
-            current_square += 9;
-            break;
-        case SOUTH_WEST:
-            current_square -= 9;
-            break;
-        case SOUTH_EAST:
-            current_square -= 7;
-            break;
-        }
+        current_square += direction;
 
         if (current_square < 0 || current_square >= BOARD_SIZE) {
             break;
         }
 
+        // could maybe combine these two checks
         if (occ & (1ULL << current_square)) {
             found_obstruction = true;
         }
@@ -368,29 +344,32 @@ void generate_sliding_moves(State *game, size_t *num_moves, Piece piece) {
     case QUEEN:
         pieces = game->bit_boards[4] | game->bit_boards[10];
         break;
+    default:
+        break;
     }
 
-    for (int square = 0; square < BOARD_SIZE; square++) {
-        if (pieces & (1ULL << square)) {
+    for (Square sq = A1; sq < H8; sq++) {
+        if (pieces & (1ULL << sq)) {
             Bitboard piece_moves = 0;
             if (piece == ROOK || piece == BISHOP) {
                 piece_moves =
-                    sliding_attacks(pieces, game->all_pieces, square, piece);
+                    sliding_attacks(pieces, game->all_pieces, sq, piece);
             } else if (piece == QUEEN) {
-                piece_moves = queen_attacks(pieces, game->all_pieces, square);
+                piece_moves = queen_attacks(pieces, game->all_pieces, sq);
             }
 
-            if (piece_moves & (1ULL << square)) {
-                game->moves[*num_moves].from = square;
-                game->moves[*num_moves].to = square;
-                (*num_moves)++;
+            for (int to_sq = 0; to_sq < BOARD_SIZE; to_sq++) {
+                if (piece_moves & (1ULL << to_sq)) {
+                    game->moves[(*num_moves)++] =
+                        (Move){sq, to_sq, QUIET, piece};
+                }
             }
         }
     }
 }
 
 inline Move empty_move() {
-    return (Move){EMPTY, EMPTY, QUIET};
+    return (Move){EMPTY, EMPTY, QUIET, NONE};
 }
 
 void generate_moves(State *game) {
@@ -407,13 +386,29 @@ void generate_moves(State *game) {
     generate_sliding_moves(game, &num_moves, BISHOP);
     generate_sliding_moves(game, &num_moves, QUEEN);
 
-    // printf("Number of moves: %lu\n", num_moves);
+    printf("Number of moves: %lu\n", num_moves);
     // for (size_t i = 0; i < num_moves; i++) {
     //     printf("From: %d, To: %d\n", game->moves[i].from, game->moves[i].to);
     // }
 }
 
-void move_piece() {
+void move_piece(State *game, Move *move) {
+    Bitboard from = 1ULL << move->from;
+    Bitboard to = 1ULL << move->to;
+
+    for (size_t i = 0; i < PIECE_TYPE_COUNT; i++) {
+        if (game->bit_boards[i] & from) {
+            game->bit_boards[i] &= ~from;
+            game->bit_boards[i] |= to;
+
+            print_board(game->bit_boards[i]);
+        }
+    }
+
+    game->all_pieces &= ~from;
+    game->all_pieces |= to;
+
+    print_board(game->all_pieces);
 }
 
 State new_state() {

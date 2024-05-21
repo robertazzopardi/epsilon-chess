@@ -4,18 +4,20 @@
 #include <SDL_rect.h>
 #include <stdbool.h>
 
+#include "engine.h"
+
 typedef struct SDL_Texture SDL_Texture;
 typedef struct SDL_Point SDL_Point;
 typedef struct SDL_Renderer SDL_Renderer;
 
-typedef struct Piece Piece;
+typedef struct PieceObject PieceObject;
 typedef struct Window Window;
 typedef struct State State;
 
-typedef struct Piece {
+typedef struct PieceObject {
     SDL_Texture *texture;
     SDL_Rect rect;
-} Piece;
+} PieceObject;
 
 typedef struct PieceTexture PieceTexture;
 
@@ -32,12 +34,13 @@ PieceTextureMap new_texture_map(SDL_Renderer *);
 
 void clean_up_texture_map(PieceTextureMap *);
 
-void make_pieces(Piece *, PieceTextureMap *, State *);
+void make_pieces(PieceObject *, PieceTextureMap *, State *);
 
-void draw_pieces(Window *, State *, Piece *);
+void draw_pieces(Window *, State *, PieceObject *);
 
-void check_if_piece(SDL_Point *, SDL_Point *, State *, Piece[], Piece **);
+void check_if_piece(SDL_Point *, SDL_Point *, State *, PieceObject[],
+                    PieceObject **);
 
-bool can_move(State *, SDL_Point *, SDL_Point *);
+void can_move(Move **, State *, SDL_Point *, SDL_Point *);
 
 #endif /* PIECE_H */

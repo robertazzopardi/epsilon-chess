@@ -25,46 +25,44 @@ typedef enum Square {
 } Square;
 // clang-format on
 
-// Define bit masks for each file on the board
-#define A_FILE 0x0101010101010101ULL // Represents the A file (leftmost column)
-#define B_FILE 0x0202020202020202ULL // Represents the B file
-#define C_FILE 0x0404040404040404ULL // Represents the C file
-#define D_FILE 0x0808080808080808ULL // Represents the D file
-#define E_FILE 0x1010101010101010ULL // Represents the E file
-#define F_FILE 0x2020202020202020ULL // Represents the F file
-#define G_FILE 0x4040404040404040ULL // Represents the G file
-#define H_FILE 0x8080808080808080ULL // Represents the H file (rightmost column)
+#define A_FILE 0x0101010101010101ULL
+#define B_FILE 0x0202020202020202ULL
+#define C_FILE 0x0404040404040404ULL
+#define D_FILE 0x0808080808080808ULL
+#define E_FILE 0x1010101010101010ULL
+#define F_FILE 0x2020202020202020ULL
+#define G_FILE 0x4040404040404040ULL
+#define H_FILE 0x8080808080808080ULL
 
-// Define bit masks for each rank on the board
-#define RANK_1 0x00000000000000FFULL // Represents the first rank (bottom row)
-#define RANK_2 0x000000000000FF00ULL // Represents the second rank
-#define RANK_3 0x0000000000FF0000ULL // Represents the third rank
-#define RANK_4 0x00000000FF000000ULL // Represents the fourth rank
-#define RANK_5 0x000000FF00000000ULL // Represents the fifth rank
-#define RANK_6 0x0000FF0000000000ULL // Represents the sixth rank
-#define RANK_7 0x00FF000000000000ULL // Represents the seventh rank
-#define RANK_8 0xFF00000000000000ULL // Represents the eighth rank (top row)
+#define RANK_1 0x00000000000000FFULL
+#define RANK_2 0x000000000000FF00ULL
+#define RANK_3 0x0000000000FF0000ULL
+#define RANK_4 0x00000000FF000000ULL
+#define RANK_5 0x000000FF00000000ULL
+#define RANK_6 0x0000FF0000000000ULL
+#define RANK_7 0x00FF000000000000ULL
+#define RANK_8 0xFF00000000000000ULL
 
-// Define bit masks for each piece type
+#define DIAG_MASK 0x8040201008040201ULL
+#define ANTI_DIAG_MASK 0x0102040810204080ULL
+
 #define WHITE_PAWN                                                             \
-    (1ULL << 8) | (1ULL << 9) | (1ULL << 10) | (1ULL << 11) | (1ULL << 12) |   \
-        (1ULL << 13) | (1ULL << 14) |                                          \
-        (1ULL << 15)                           // White pawns on second rank
-#define WHITE_KNIGHT (1ULL << 1) | (1ULL << 6) // White knights on B1 and G1
-#define WHITE_BISHOP (1ULL << 2) | (1ULL << 5) // White bishops on C1 and F1
-#define WHITE_ROOK (1ULL << 0) | (1ULL << 7)   // White rooks on A1 and H1
-#define WHITE_QUEEN (1ULL << 3)                // White queen on D1
-#define WHITE_KING (1ULL << 4)                 // White king on E1
+    (1ULL << A2) | (1ULL << B2) | (1ULL << C2) | (1ULL << D2) | (1ULL << E2) | \
+        (1ULL << F2) | (1ULL << G2) | (1ULL << H2)
+#define WHITE_KNIGHT (1ULL << B1) | (1ULL << G1)
+#define WHITE_BISHOP (1ULL << C1) | (1ULL << F1)
+#define WHITE_ROOK (1ULL << A1) | (1ULL << H1)
+#define WHITE_QUEEN (1ULL << D1)
+#define WHITE_KING (1ULL << E1)
 
 #define BLACK_PAWN                                                             \
-    (1ULL << 48) | (1ULL << 49) | (1ULL << 50) | (1ULL << 51) | (1ULL << 52) | \
-        (1ULL << 53) | (1ULL << 54) |                                          \
-        (1ULL << 55)                             // Black pawns on seventh rank
-#define BLACK_KNIGHT (1ULL << 57) | (1ULL << 62) // Black knights on B8 and G8
-#define BLACK_BISHOP (1ULL << 58) | (1ULL << 61) // Black bishops on C8 and F8
-#define BLACK_ROOK (1ULL << 56) | (1ULL << 63)   // Black rooks on A8 and H8
-#define BLACK_QUEEN (1ULL << 59)                 // Black queen on D8
-#define BLACK_KING (1ULL << 60)                  // Black king on E8
+    (1ULL << A7) | (1ULL << B7) | (1ULL << C7) | (1ULL << D7) | (1ULL << E7) | \
+        (1ULL << F7) | (1ULL << G7) | (1ULL << H7)
+#define BLACK_KNIGHT (1ULL << B8) | (1ULL << G8)
+#define BLACK_BISHOP (1ULL << C8) | (1ULL << F8)
+#define BLACK_ROOK (1ULL << A8) | (1ULL << H8)
+#define BLACK_QUEEN (1ULL << D8)
+#define BLACK_KING (1ULL << E8)
 
 // Define special move flags
 #define NORMAL_MOVE 0

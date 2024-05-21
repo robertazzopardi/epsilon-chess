@@ -20,8 +20,8 @@ typedef struct {
     SDL_Event event;
 } Event;
 
-static void handle_events(Window *window, State *game, Piece **piece,
-                          SDL_Rect *selected_square, Piece *pieces,
+static void handle_events(Window *window, State *game, PieceObject **piece,
+                          SDL_Rect *selected_square, PieceObject *pieces,
                           Event *event, bool *running) {
     while (SDL_PollEvent(&event->event)) {
         switch (event->event.type) {
@@ -31,18 +31,20 @@ static void handle_events(Window *window, State *game, Piece **piece,
         case SDL_MOUSEBUTTONUP:
             if (event->event.button.button == SDL_BUTTON_LEFT &&
                 piece != NULL) {
-                if (can_move(game, &event->mouse_pos, &event->old_pos)) {
-                    // SDL_SetWindowTitle(
-                    //     window->win,
-                    //     PLAYER_TO_MOVE(window->board->toMove));
-
+                Move *move = NULL;
+                can_move(&move, game, &event->mouse_pos, &event->old_pos);
+                if (move != NULL) {
                     (*piece)->rect.x =
                         (event->mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
                     (*piece)->rect.y =
                         (event->mouse_pos.y / SQUARE_SIZE) * SQUARE_SIZE;
 
-                    *piece = NULL;
                     generate_moves(game);
+
+                    printf("Move: %d %d\n", move->from, move->to);
+                    move_piece(game, move);
+
+                    *piece = NULL;
                 } else if (*piece != NULL) {
                     (*piece)->rect.x = event->old_pos.x;
                     (*piece)->rect.y = event->old_pos.y;
@@ -103,8 +105,8 @@ static void game_loop(Window *window, State *game,
         .y = 0,
     };
 
-    Piece *piece = NULL;
-    Piece pieces[BOARD_SIZE];
+    PieceObject *piece = NULL;
+    PieceObject pieces[BOARD_SIZE];
     make_pieces(pieces, texture_map, game);
 
     Event event = {0};
