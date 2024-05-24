@@ -55,10 +55,7 @@ void generate_moves(State *);
 void move_piece(State *, Move *);
 
 inline Location get_location(int sq) {
-    // int file = sq & 7;
-    // int rank = sq >> 3;
-    // int rank = 7 - (sq >> 3);
-    return (Location){7 - (sq >> 3), sq & 7};
+    return (Location){sq >> 3, sq & 7};
 }
 
 inline int get_square(int rank, int file) {

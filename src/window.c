@@ -31,8 +31,10 @@ static void handle_events(Window *window, State *game, PieceObject **piece,
         case SDL_MOUSEBUTTONUP:
             if (event->event.button.button == SDL_BUTTON_LEFT &&
                 piece != NULL) {
+
                 Move *move = NULL;
                 can_move(&move, game, &event->mouse_pos, &event->old_pos);
+
                 if (move != NULL) {
                     (*piece)->rect.x =
                         (event->mouse_pos.x / SQUARE_SIZE) * SQUARE_SIZE;
@@ -41,10 +43,9 @@ static void handle_events(Window *window, State *game, PieceObject **piece,
 
                     generate_moves(game);
 
-                    printf("Move: %d %d\n", move->from, move->to);
                     move_piece(game, move);
 
-                    *piece = NULL;
+                    // *piece = NULL;
                 } else if (*piece != NULL) {
                     (*piece)->rect.x = event->old_pos.x;
                     (*piece)->rect.y = event->old_pos.y;
@@ -133,8 +134,8 @@ static void game_loop(Window *window, State *game,
         // Render possible moves for selected piece
         if (piece != NULL) {
             for (Square sq = 0; sq < MAX_MOVES; sq++) {
-                Square from_sq = get_square(piece->rect.y / SQUARE_SIZE,
-                                            piece->rect.x / SQUARE_SIZE);
+                Square from_sq = get_square(event.old_pos.y / SQUARE_SIZE,
+                                            event.old_pos.x / SQUARE_SIZE);
 
                 if (from_sq == game->moves[sq].from) {
                     int to = game->moves[sq].to;

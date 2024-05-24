@@ -16,8 +16,6 @@
 #define QUEEN_IMG "./assets/864630-chess/svg/pieces/queen.svg"
 #define KING_IMG "./assets/864630-chess/svg/pieces/king.svg"
 
-#define PIECE_COUNT 16
-
 static inline SDL_Rect get_piece_rect(int sq) {
     Location loc = get_location(sq);
     return (SDL_Rect){loc.file * SQUARE_SIZE, loc.rank * SQUARE_SIZE,
@@ -26,7 +24,7 @@ static inline SDL_Rect get_piece_rect(int sq) {
 
 void check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
                     PieceObject pieces[], PieceObject **piece) {
-    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (SDL_PointInRect(mouse_pos, &rect) &&
             game->all_pieces & (1ULL << sq)) {
@@ -43,7 +41,7 @@ void check_if_piece(SDL_Point *mouse_pos, SDL_Point *offset, State *game,
 
 void can_move(Move **move, State *game, SDL_Point *mouse_pos,
               SDL_Point *old_pos) {
-    for (Square sq = 0; sq < MAX_MOVES; sq++) {
+    for (int sq = 0; sq < MAX_MOVES; sq++) {
         Square from_sq =
             get_square(old_pos->y / SQUARE_SIZE, old_pos->x / SQUARE_SIZE);
         Square to_sq =
@@ -67,48 +65,40 @@ PieceTextureMap new_texture_map(SDL_Renderer *renderer) {
     return (PieceTextureMap){pawn, rook, knight, bishop, queen, king};
 }
 
-void clean_up_texture_map(PieceTextureMap *map) {
-    SDL_DestroyTexture(map->pawn->white);
-    map->pawn->white = NULL;
-    SDL_DestroyTexture(map->pawn->black);
-    map->pawn->black = NULL;
-    SDL_DestroyTexture(map->rook->white);
-    map->rook->white = NULL;
-    SDL_DestroyTexture(map->rook->black);
-    map->rook->black = NULL;
-    SDL_DestroyTexture(map->knight->white);
-    map->knight->white = NULL;
-    SDL_DestroyTexture(map->knight->black);
-    map->knight->black = NULL;
-    SDL_DestroyTexture(map->bishop->white);
-    map->bishop->white = NULL;
-    SDL_DestroyTexture(map->bishop->black);
-    map->bishop->black = NULL;
-    SDL_DestroyTexture(map->queen->white);
-    map->queen->white = NULL;
-    SDL_DestroyTexture(map->queen->black);
-    map->queen->black = NULL;
-    SDL_DestroyTexture(map->king->white);
-    map->king->white = NULL;
-    SDL_DestroyTexture(map->king->black);
-    map->king->black = NULL;
+static inline void free_texture(SDL_Texture *texture) {
+    SDL_DestroyTexture(texture);
+    texture = NULL;
+}
 
-    free(map->pawn);
-    map->pawn = NULL;
-    free(map->rook);
-    map->rook = NULL;
-    free(map->king);
-    map->king = NULL;
-    free(map->knight);
-    map->knight = NULL;
-    free(map->bishop);
-    map->bishop = NULL;
-    free(map->queen);
-    map->queen = NULL;
+static inline void free_map(PieceTexture *texture) {
+    free(texture);
+    texture = NULL;
+}
+
+void clean_up_texture_map(PieceTextureMap *map) {
+    free_texture(map->pawn->white);
+    free_texture(map->pawn->black);
+    free_texture(map->rook->white);
+    free_texture(map->rook->black);
+    free_texture(map->knight->white);
+    free_texture(map->knight->black);
+    free_texture(map->bishop->white);
+    free_texture(map->bishop->black);
+    free_texture(map->queen->white);
+    free_texture(map->queen->black);
+    free_texture(map->king->white);
+    free_texture(map->king->black);
+
+    free_map(map->pawn);
+    free_map(map->rook);
+    free_map(map->king);
+    free_map(map->knight);
+    free_map(map->bishop);
+    free_map(map->queen);
 }
 
 void make_pieces(PieceObject *pieces, PieceTextureMap *map, State *game) {
-    for (Square sq = A1; sq < H8; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         SDL_Rect rect = get_piece_rect(sq);
         if (game->bit_boards[0] & (1ULL << sq)) {
             pieces[sq] = (PieceObject){map->pawn->white, rect};
@@ -149,7 +139,7 @@ void render_if_occupied(Window *window, State *game, PieceObject *piece,
 }
 
 void draw_pieces(Window *window, State *game, PieceObject *pieces) {
-    for (Square sq = A1; sq < H8; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         PieceObject piece = pieces[sq];
         render_if_occupied(window, game, &piece, sq);
     }

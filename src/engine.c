@@ -51,24 +51,19 @@ inline void bit_set(Bitboard *number, Bitboard n) {
 
 // Print the board represented by the given bitboard
 void print_board(Bitboard board) {
-    for (int rank = 7; rank >= 0; rank--) {
-        for (int file = 0; file < 8; file++) {
-            int square = rank * 8 + file;
-            if (board & (1ULL << square)) {
-                printf("1 ");
-            } else {
-                printf("0 ");
-            }
-        }
-        printf("\n");
-    }
     printf("\n");
-}
+    for (size_t sq = A1; sq <= H8; sq++) {
+        if (board & (1ULL << sq)) {
+            printf("1 ");
+        } else {
+            printf("0 ");
+        }
 
-static const Bitboard pieces[] = {
-    WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_KING, WHITE_QUEEN,
-    BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_KING, BLACK_QUEEN,
-};
+        if (FILE_OF(sq) == 7) {
+            printf("\n");
+        }
+    }
+}
 
 const Bitboard not_a_file = 0xfefefefefefefefeULL;
 const Bitboard not_h_file = 0x7f7f7f7f7f7f7f7fULL;
@@ -146,7 +141,7 @@ void generate_pawn_moves(State *game, size_t *num_moves) {
     Bitboard white_dbl_pushes = w_dbl_push_targets(white_pawns, all_pieces);
     Bitboard black_dbl_pushes = b_dbl_push_targets(black_pawns, all_pieces);
 
-    for (Square sq = A1; sq < H8; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         if (white_single_pushes & (1ULL << sq)) {
             game->moves[(*num_moves)++] = (Move){sq - 8, sq, QUIET, PAWN};
         } else if (black_single_pushes & (1ULL << sq)) {
@@ -181,7 +176,7 @@ Bitboard king_attacks(Bitboard kingSet) {
 void generate_king_moves(State *game, size_t *num_moves) {
     Bitboard kings = game->bit_boards[5] | game->bit_boards[11];
 
-    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         if (kings & (1ULL << sq)) {
             Bitboard potential_moves = king_attacks(kings);
             Bitboard occupied_squares = potential_moves & game->all_pieces;
@@ -199,7 +194,7 @@ void generate_king_moves(State *game, size_t *num_moves) {
 void generate_knight_moves(State *game, size_t *num_moves) {
     Bitboard knights = game->bit_boards[1] | game->bit_boards[7];
 
-    for (int sq = 0; sq < BOARD_SIZE; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         if (knights & (1ULL << sq)) {
             Bitboard potential_moves = knight_attacks((1ULL << sq));
             Bitboard occupied_squares = potential_moves & game->all_pieces;
@@ -348,7 +343,7 @@ void generate_sliding_moves(State *game, size_t *num_moves, Piece piece) {
         break;
     }
 
-    for (Square sq = A1; sq < H8; sq++) {
+    for (Square sq = A1; sq <= H8; sq++) {
         if (pieces & (1ULL << sq)) {
             Bitboard piece_moves = 0;
             if (piece == ROOK || piece == BISHOP) {
@@ -411,6 +406,11 @@ void move_piece(State *game, Move *move) {
     print_board(game->all_pieces);
 }
 
+static const Bitboard pieces[] = {
+    WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_KING, WHITE_QUEEN,
+    BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_KING, BLACK_QUEEN,
+};
+
 State new_state() {
     State game = {0};
 
@@ -424,21 +424,3 @@ State new_state() {
 
     return game;
 }
-
-// int main(void) {
-//     State game;
-//
-//     game.all_pieces = EMPTY_BOARD;
-//     for (size_t i = 0; i < PIECE_TYPE_COUNT; i++) {
-//         game.bit_boards[i] = EMPTY_BOARD | pieces[i];
-//         game.all_pieces |= game.bit_boards[i];
-//     }
-//
-//     print_board(game.all_pieces);
-//
-//     init_masks();
-//
-//     generate_moves(&game);
-//
-//     return 0;
-// }

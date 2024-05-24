@@ -46,23 +46,19 @@ typedef enum Square {
 #define DIAG_MASK 0x8040201008040201ULL
 #define ANTI_DIAG_MASK 0x0102040810204080ULL
 
-#define WHITE_PAWN                                                             \
-    (1ULL << A2) | (1ULL << B2) | (1ULL << C2) | (1ULL << D2) | (1ULL << E2) | \
-        (1ULL << F2) | (1ULL << G2) | (1ULL << H2)
-#define WHITE_KNIGHT (1ULL << B1) | (1ULL << G1)
-#define WHITE_BISHOP (1ULL << C1) | (1ULL << F1)
-#define WHITE_ROOK (1ULL << A1) | (1ULL << H1)
-#define WHITE_QUEEN (1ULL << D1)
-#define WHITE_KING (1ULL << E1)
+#define WHITE_PAWN 0x000000000000FF00ULL
+#define WHITE_KNIGHT 0x0000000000000042ULL
+#define WHITE_BISHOP 0x0000000000000024ULL
+#define WHITE_ROOK 0x0000000000000081ULL
+#define WHITE_QUEEN 0x0000000000000008ULL
+#define WHITE_KING 0x0000000000000010ULL
 
-#define BLACK_PAWN                                                             \
-    (1ULL << A7) | (1ULL << B7) | (1ULL << C7) | (1ULL << D7) | (1ULL << E7) | \
-        (1ULL << F7) | (1ULL << G7) | (1ULL << H7)
-#define BLACK_KNIGHT (1ULL << B8) | (1ULL << G8)
-#define BLACK_BISHOP (1ULL << C8) | (1ULL << F8)
-#define BLACK_ROOK (1ULL << A8) | (1ULL << H8)
-#define BLACK_QUEEN (1ULL << D8)
-#define BLACK_KING (1ULL << E8)
+#define BLACK_PAWN 0x00FF000000000000ULL
+#define BLACK_KNIGHT 0x4200000000000000ULL
+#define BLACK_BISHOP 0x2400000000000000ULL
+#define BLACK_ROOK 0x8100000000000000ULL
+#define BLACK_QUEEN 0x0800000000000000ULL
+#define BLACK_KING 0x1000000000000000ULL
 
 // Define special move flags
 #define NORMAL_MOVE 0
